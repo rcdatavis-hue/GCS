@@ -7,6 +7,7 @@
  "freight-rows.js",
  "pricing-hooks.js",
  "dropdowns.js",
+ "gcs-panels.js",
  "summary-tab.js",
  "freight-tab.js",
  "schedule-tab.js",

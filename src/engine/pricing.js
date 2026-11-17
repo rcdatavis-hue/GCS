@@ -298,8 +298,8 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
   visitAll(n => {
     const isParent = n._ch && n._ch.length > 0;
     const ready = isParent
-      ? !!(n.partNumber?.trim() && n.description?.trim() && (n.margin > 0 || n.manualSellPrice > 0)) && n._ch.every(c => nodeReady(c))
-      : !!(n.partNumber?.trim() && n.description?.trim() && n.supplier?.trim() && n.unitCost > 0 && (n.margin > 0 || n.manualSellPrice > 0));
+      ? !!(n.partNumber?.trim() && n.description?.trim() && (marginOf(n) > 0 || n.manualSellPrice > 0)) && n._ch.every(c => nodeReady(c))
+      : !!(n.partNumber?.trim() && n.description?.trim() && n.supplier?.trim() && n.unitCost > 0 && (marginOf(n) > 0 || n.manualSellPrice > 0));
     quoteReadyMap.set(n.id, ready);
   });
 
