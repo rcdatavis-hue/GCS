@@ -1,0 +1,189 @@
+{
+ "project": {
+  "name": "Fixture",
+  "ref": "Q-TEST",
+  "rev": "0",
+  "bu": "CIW",
+  "customer": {
+   "name": "Test Co",
+   "code": "C1",
+   "ref": "",
+   "country": "UK"
+  },
+  "sellCcy": "USD",
+  "rates": {
+   "USD": 1,
+   "GBP": 0.79,
+   "EUR": 0.92,
+   "ARS": 1000,
+   "BRL": 5.8
+  },
+  "defaultMargin": 0,
+  "defaultContingency": 0,
+  "defaultDealer": 2,
+  "discountMitigation": 0,
+  "sAndAExpense": 10,
+  "source": "",
+  "notes": "",
+  "incoterm": "EXW",
+  "freightPaymentTerm": "",
+  "paymentTerms": "",
+  "insideSales": "",
+  "outsideSales": "",
+  "rfqDate": "2026-11-01",
+  "revisionDate": "",
+  "afrmmRate": 8,
+  "customsCharges": 9,
+  "recapBenefit": "N",
+  "salesType": "Industrialized",
+  "locked": false,
+  "ratesRefreshedAt": null,
+  "packagedAt": null,
+  "approvals": []
+ },
+ "items": [
+  {
+   "id": "i28",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-28",
+   "description": "Part 28",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 1,
+   "unitCost": 1000,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 20,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "i29",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-29",
+   "description": "Part 29",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 4,
+   "unitCost": 250,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 30,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "i30",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-30",
+   "description": "Part 30",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 1,
+   "unitCost": 90,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 25,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": 200,
+   "notes": ""
+  }
+ ],
+ "freight": {
+  "inbound": [],
+  "outbound": [
+   {
+    "id": "f31",
+    "desc": "Freight 31",
+    "cost": 400,
+    "ccy": "USD",
+    "leadTimeDays": 7,
+    "freightQuotes": [],
+    "activeQuoteId": null,
+    "margin": 20
+   },
+   {
+    "id": "f32",
+    "desc": "Freight 32",
+    "cost": 150,
+    "ccy": "USD",
+    "leadTimeDays": 7,
+    "freightQuotes": [],
+    "activeQuoteId": null,
+    "margin": 25,
+    "marginMode": "markup"
+   }
+  ],
+  "packingCrating": {
+   "enabled": false,
+   "pct": 0,
+   "overrideAmt": null
+  }
+ },
+ "schedule": {
+  "start": "2026-11-01",
+  "phases": [
+   {
+    "id": "ph1",
+    "name": "PO Processing",
+    "days": 5
+   },
+   {
+    "id": "ph2",
+    "name": "Fabrication",
+    "days": 20
+   }
+  ],
+  "salesforceLink": "",
+  "sharepointLink": ""
+ },
+ "brazilTaxes": {},
+ "brazilStates": {
+  "origin": "SP",
+  "destination": "SP"
+ },
+ "forceAllocToPricelist": false,
+ "forceAllocToZeroCost": {
+  "freight": false,
+  "siscomex": false,
+  "afrmm": false
+ },
+ "distributeOutboundFreight": true,
+ "distributePackingCrating": false,
+ "language": "en",
+ "dateFormat": "DD/MM/YYYY",
+ "rowColors": {},
+ "costingSheets": [
+  {
+   "id": "main",
+   "name": "Sheet 1"
+  }
+ ],
+ "activeSheetId": "main"
+}

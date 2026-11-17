@@ -1,0 +1,20 @@
+[
+ "num-input.js",
+ "heading-row.js",
+ "item-row.js",
+ "primitives.js",
+ "autocomplete.js",
+ "freight-rows.js",
+ "pricing-hooks.js",
+ "dropdowns.js",
+ "summary-tab.js",
+ "freight-tab.js",
+ "schedule-tab.js",
+ "approval-history-card.js",
+ "setup-tab.js",
+ "brazil-import-tax-tab.js",
+ "brazil-sales-tax-tab.js",
+ "costing-tab.js",
+ "parts-worksheet.js",
+ "app-mount.js"
+]

@@ -1,0 +1,231 @@
+{
+ "project": {
+  "name": "Fixture",
+  "ref": "Q-TEST",
+  "rev": "0",
+  "bu": "CIW",
+  "customer": {
+   "name": "Test Co",
+   "code": "C1",
+   "ref": "",
+   "country": "UK"
+  },
+  "sellCcy": "USD",
+  "rates": {
+   "USD": 1,
+   "GBP": 0.79,
+   "EUR": 0.92,
+   "ARS": 1000,
+   "BRL": 5.8
+  },
+  "defaultMargin": 0,
+  "defaultContingency": 0,
+  "defaultDealer": 0,
+  "discountMitigation": 0,
+  "sAndAExpense": 10,
+  "source": "",
+  "notes": "",
+  "incoterm": "EXW",
+  "freightPaymentTerm": "",
+  "paymentTerms": "",
+  "insideSales": "",
+  "outsideSales": "",
+  "rfqDate": "2026-11-01",
+  "revisionDate": "",
+  "afrmmRate": 8,
+  "customsCharges": 9,
+  "recapBenefit": "N",
+  "salesType": "Industrialized",
+  "locked": false,
+  "ratesRefreshedAt": null,
+  "packagedAt": null,
+  "approvals": []
+ },
+ "items": [
+  {
+   "id": "h1",
+   "type": "heading",
+   "sheetId": "main",
+   "description": "Section A"
+  },
+  {
+   "id": "i47",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-47",
+   "description": "Part 47",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 3,
+   "unitCost": 100,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 25,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 5,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "i48",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-48",
+   "description": "Part 48",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 1,
+   "unitCost": 55,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 40,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "h2",
+   "type": "heading",
+   "sheetId": "main",
+   "description": "Section B"
+  },
+  {
+   "id": "i49",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "main",
+   "partNumber": "P-49",
+   "description": "Part 49",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 1,
+   "unitCost": 999,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 25,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 12.5,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "i50",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "s2",
+   "partNumber": "P-50",
+   "description": "Part 50",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 1,
+   "unitCost": 4000,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 18,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  },
+  {
+   "id": "i51",
+   "type": "item",
+   "parentId": null,
+   "sheetId": "s2",
+   "partNumber": "P-51",
+   "description": "Part 51",
+   "drawingNumber": "",
+   "supplier": "Supplier A",
+   "qty": 10,
+   "unitCost": 35,
+   "ccy": "USD",
+   "source": "Quotation",
+   "margin": 25,
+   "contingency": 0,
+   "tariff": 0,
+   "discount": 0,
+   "leadTime": 10,
+   "imported": false,
+   "afrmm": false,
+   "customsCharges": 9,
+   "manualSellPrice": null,
+   "notes": ""
+  }
+ ],
+ "freight": {
+  "inbound": [],
+  "outbound": [],
+  "packingCrating": {
+   "enabled": false,
+   "pct": 0,
+   "overrideAmt": null
+  }
+ },
+ "schedule": {
+  "start": "2026-11-01",
+  "phases": [
+   {
+    "id": "ph1",
+    "name": "PO Processing",
+    "days": 5
+   },
+   {
+    "id": "ph2",
+    "name": "Fabrication",
+    "days": 20
+   }
+  ],
+  "salesforceLink": "",
+  "sharepointLink": ""
+ },
+ "brazilTaxes": {},
+ "brazilStates": {
+  "origin": "SP",
+  "destination": "SP"
+ },
+ "forceAllocToPricelist": false,
+ "forceAllocToZeroCost": {
+  "freight": false,
+  "siscomex": false,
+  "afrmm": false
+ },
+ "distributeOutboundFreight": false,
+ "distributePackingCrating": false,
+ "language": "en",
+ "dateFormat": "DD/MM/YYYY",
+ "rowColors": {},
+ "costingSheets": [
+  {
+   "id": "main",
+   "name": "Sheet 1"
+  },
+  {
+   "id": "s2",
+   "name": "Options"
+  }
+ ],
+ "activeSheetId": "main"
+}

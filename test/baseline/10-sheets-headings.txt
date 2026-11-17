@@ -1,0 +1,658 @@
+===== HEADER
+
+.pcw-root{min-height:100vh;height:100%;background:#f1f5f9;font-family:'IBM Plex Sans',sans-serif;}
+:root {
+--pcw-modal-bg:#fff;
+--pcw-modal-border:#e2e8f0;
+--pcw-modal-text:#1e293b;
+--pcw-modal-subtext:#64748b;
+--pcw-modal-muted:#94a3b8;
+--pcw-surface:#f8fafc;
+--pcw-surface-2:#f1f5f9;
+--pcw-surface-3:#fff;
+--pcw-border:#e2e8f0;
+--pcw-border-subtle:#f1f5f9;
+--pcw-input-bg:#fff;
+--pcw-input-text:#1e293b;
+--pcw-table-head-bg:#f1f5f9;
+--pcw-table-head-text:#475569;
+--pcw-table-row-alt:#f0fdf4;
+--pcw-table-row-border:#f1f5f9;
+--pcw-text-primary:#1e293b;
+--pcw-text-secondary:#64748b;
+--pcw-text-muted:#94a3b8;
+--pcw-accent-blue:#2563eb;
+--pcw-supplier-best-bg:#f0fdf4;
+--pcw-supplier-best-border:#16a34a;
+--pcw-supplier-name:#1e293b;
+}
+[data-theme="dark"] {
+--pcw-modal-bg:#1e293b;
+--pcw-modal-border:#334155;
+--pcw-modal-text:#e2e8f0;
+--pcw-modal-subtext:#94a3b8;
+--pcw-modal-muted:#64748b;
+--pcw-surface:#162032;
+--pcw-surface-2:#1e293b;
+--pcw-surface-3:#253347;
+--pcw-border:#334155;
+--pcw-border-subtle:#253347;
+--pcw-input-bg:#0f172a;
+--pcw-input-text:#e2e8f0;
+--pcw-table-head-bg:#0f172a;
+--pcw-table-head-text:#94a3b8;
+--pcw-table-row-alt:#1a2e1a;
+--pcw-table-row-border:#253347;
+--pcw-text-primary:#e2e8f0;
+--pcw-text-secondary:#94a3b8;
+--pcw-text-muted:#64748b;
+--pcw-accent-blue:#60a5fa;
+--pcw-supplier-best-bg:#0d2a1a;
+--pcw-supplier-best-border:#16a34a;
+--pcw-supplier-name:#e2e8f0;
+}
+[data-theme="dark"] .pcw-root{background:#0f172a;}
+[data-theme="dark"] .pcw-header{background:#020617;border-bottom:1px solid #1e293b;}
+[data-theme="dark"] .pcw-nav{background:#0f172a;border-bottom:1px solid #1e293b;}
+[data-theme="dark"] .pcw-tab{color:#94a3b8;}
+[data-theme="dark"] .pcw-tab:hover{color:#cbd5e1;}
+[data-theme="dark"] .pcw-tab.active{color:#60a5fa;}
+[data-theme="dark"] .pcw-main{background:#0f172a;}
+[data-theme="dark"] .pcw-card{background:#1e293b;border-color:#334155;color:#e2e8f0;}
+[data-theme="dark"] .pcw-h3{color:#cbd5e1;border-bottom-color:#334155;}
+[data-theme="dark"] .pcw-label{color:#94a3b8;}
+[data-theme="dark"] .pcw-input{background:#0f172a;border-color:#334155;color:#e2e8f0;}
+[data-theme="dark"] .pcw-input::placeholder{color:#64748b;}
+[data-theme="dark"] .pcw-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.15);}
+[data-theme="dark"] .pcw-btn-secondary{background:#1e293b;border-color:#334155;color:#cbd5e1;}
+[data-theme="dark"] .pcw-btn-secondary:hover{border-color:#60a5fa;color:#60a5fa;}
+[data-theme="dark"] .pcw-bu-btn{background:#1e293b;color:#cbd5e1;border-color:#334155;}
+[data-theme="dark"] .pcw-bu-btn:hover:not(.active){border-color:#475569;}
+[data-theme="dark"] .pcw-ccy-btn{background:#1e293b;color:#cbd5e1;border-color:#334155;}
+[data-theme="dark"] .pcw-ccy-btn:hover:not(.active){border-color:#475569;}
+[data-theme="dark"] .pcw-table-wrap{background:#1e293b;border-color:#334155;}
+[data-theme="dark"] .pcw-table{background:#1e293b;}
+[data-theme="dark"] .pcw-table tbody{background:#1e293b;}
+[data-theme="dark"] .pcw-table-wrap::-webkit-scrollbar{width:8px;height:8px;background:#0f172a;}
+[data-theme="dark"] .pcw-table-wrap::-webkit-scrollbar-track{background:#0f172a;}
+[data-theme="dark"] .pcw-table-wrap::-webkit-scrollbar-thumb{background:#334155;border-radius:4px;}
+[data-theme="dark"] .pcw-table-wrap::-webkit-scrollbar-corner{background:#0f172a;}
+[data-theme="dark"] .pcw-table-wrap{scrollbar-color:#334155 #0f172a;}
+[data-theme="dark"] .pcw-tr-head{background:#020617;}
+[data-theme="dark"] .pcw-th{background:#020617;}
+[data-theme="dark"] .pcw-td-sticky-left,[data-theme="dark"] .pcw-td-sticky-left-2{background:#1e293b;}
+[data-theme="dark"] .pcw-row{background:#1e293b;}
+[data-theme="dark"] .pcw-row .pcw-td-sticky-left,[data-theme="dark"] .pcw-row .pcw-td-sticky-left-2{background:#1e293b;}
+[data-theme="dark"] .pcw-row:hover{background:#1c2942!important;}
+[data-theme="dark"] .pcw-row:hover .pcw-td-sticky-left,[data-theme="dark"] .pcw-row:hover .pcw-td-sticky-left-2{background:#1c2942!important;}
+[data-theme="dark"] .pcw-ci{color:#e2e8f0;}
+[data-theme="dark"] .pcw-ci:focus{background:#dbeafe;color:#1e293b;}
+[data-theme="dark"] .pcw-ci:focus::selection{background:#2563eb;color:#fff;}
+.pcw-ci::selection{background:#2563eb;color:#fff;}
+[data-theme="dark"] .pcw-ms{color:#cbd5e1;background:transparent;}
+[data-theme="dark"] .pcw-empty{color:#64748b;}
+[data-theme="dark"] .pcw-hero{background:#1e293b;border-color:#334155;}
+[data-theme="dark"] .pcw-hero-title{color:#f1f5f9;}
+[data-theme="dark"] .pcw-hero-sub{color:#94a3b8;}
+[data-theme="dark"] .pcw-hero-meta{color:#64748b;}
+[data-theme="dark"] .pcw-hero-total{color:#fbbf24;}
+[data-theme="dark"] .pcw-pill{background:#1e293b;color:#94a3b8;border-color:#334155;}
+[data-theme="dark"] .pcw-kpi-dark{background:#312e81!important;border-color:#4338ca!important;}
+[data-theme="dark"] .pcw-stat-lbl{color:#94a3b8;}
+[data-theme="dark"] .pcw-stat-val{color:#f1f5f9;}
+[data-theme="dark"] .pcw-stat-sub{color:#64748b;}
+[data-theme="dark"] .pcw-info-box{background:#1e293b;border-color:#334155;color:#cbd5e1;}
+[data-theme="dark"] .pcw-notes-input{background:#0f172a;border-color:#334155;color:#e2e8f0;}
+[data-theme="dark"] .pcw-pricelist-tag{background:#1e293b;border-color:#334155;color:#94a3b8;}
+[data-theme="dark"] .pcw-input-invalid{border-color:#f87171!important;background:#450a0a!important;}
+[data-theme="dark"] .pcw-search-input{background:#0f172a;border-color:#334155;color:#e2e8f0;}
+[data-theme="dark"] .pcw-cogs-cell{color:#93c5fd;}
+.pcw-ci-autofilled{background:#eff6ff!important;border-color:#bfdbfe!important;}
+.pcw-ci-pricelist{background:#f0fdf4!important;border-color:#86efac!important;}
+[data-theme="dark"] .pcw-ci-pricelist{background:#052e16!important;border-color:#166534!important;}
+[data-theme="dark"] .pcw-ci-autofilled{background:#1e3a5f!important;border-color:#2563eb!important;}
+.pcw-sum-text-primary{color:#1e293b;}
+.pcw-sum-text-secondary{color:#64748b;}
+.pcw-sum-text-muted{color:#94a3b8;}
+.pcw-sum-border-top{border-top:2px solid #e2e8f0;}
+.pcw-sum-bar-track{background:#f1f5f9;}
+.pcw-sum-info-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+.pcw-sum-info-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;}
+.pcw-sum-detail-row{border-color:#f8fafc;}
+.pcw-sum-pill{background:#f8fafc;border-color:#e2e8f0;}
+.pcw-sum-toggle-btn{background:#f1f5f9;border:none;color:#64748b;}
+.pcw-sum-ccy-label{color:#1e293b;}
+[data-theme="dark"] .pcw-sum-text-primary{color:#f1f5f9;}
+[data-theme="dark"] .pcw-sum-text-secondary{color:#94a3b8;}
+[data-theme="dark"] .pcw-sum-text-muted{color:#64748b;}
+[data-theme="dark"] .pcw-sum-border-top{border-top:2px solid #334155;}
+[data-theme="dark"] .pcw-sum-bar-track{background:#0f172a;}
+[data-theme="dark"] .pcw-sum-info-green{background:#052e16;border-color:#166534;color:#86efac;}
+[data-theme="dark"] .pcw-sum-info-blue{background:#0c1a3a;border-color:#1d4ed8;color:#93c5fd;}
+[data-theme="dark"] .pcw-sum-detail-row{border-color:#1e293b;}
+[data-theme="dark"] .pcw-sum-pill{background:#1e293b;border-color:#334155;color:#cbd5e1;}
+[data-theme="dark"] .pcw-sum-toggle-btn{background:#334155;color:#94a3b8;}
+[data-theme="dark"] .pcw-sum-ccy-label{color:#e2e8f0;}
+[data-theme="dark"] { --pcw-bar-empty: #1e293b; }
+[data-theme="dark"] .hover:bg-blue-50:hover{background:var(--pcw-surface-3)!important;}
+[data-theme="dark"] .hover:bg-amber-50:hover{background:var(--pcw-surface-3)!important;}
+[data-theme="dark"] .pcw-card p,[data-theme="dark"] .pcw-card span:not([class]){color:var(--pcw-text-secondary);}
+[data-theme="dark"] .pcw-hint{color:#64748b;}
+[data-theme="dark"] select{background:var(--pcw-input-bg);color:var(--pcw-input-text);border-color:var(--pcw-border);}
+[data-theme="dark"] select option{background:#1e293b;color:#e2e8f0;}
+.pcw-modal-panel{background:var(--pcw-modal-bg);color:var(--pcw-modal-text);}
+.pcw-modal-subtext{color:var(--pcw-modal-subtext);}
+.pcw-modal-surface{background:var(--pcw-surface);border-color:var(--pcw-border);}
+.pcw-modal-input{background:var(--pcw-input-bg)!important;color:var(--pcw-input-text)!important;border-color:var(--pcw-border)!important;}
+[data-theme="dark"] .pcw-modal-panel{box-shadow:0 20px 60px rgba(0,0,0,.6);}
+[data-theme="dark"] .pcw-modal-input{background:#0f172a!important;color:#e2e8f0!important;border-color:#334155!important;}
+[data-theme="dark"] .pcw-modal-row-even{background:#1e293b!important;}
+[data-theme="dark"] .pcw-modal-row-odd{background:#1a2438!important;}
+[data-theme="dark"] select.pcw-modal-input option{background:#1e293b;color:#e2e8f0;}
+.pcw-action-hint{font-size:9px;color:#cbd5e1;letter-spacing:.05em;cursor:default;user-select:none;line-height:1;}
+[data-theme="dark"] .pcw-action-hint{color:#475569;}
+.pcw-col-drag-over{outline:2px solid #3b82f6;outline-offset:-2px;}
+.pcw-mono{font-family:'IBM Plex Mono',monospace;}
+.pcw-header{background:#0f172a;color:#fff;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 10px rgba(0,0,0,.5);position:sticky;top:0;z-index:100;}
+.pcw-logo{width:36px;height:36px;background:linear-gradient(135deg,#3b82f6,#6366f1);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:10px;letter-spacing:.04em;color:#fff;font-family:'IBM Plex Mono',monospace;flex-shrink:0;}
+.pcw-logo-title{font-weight:700;font-size:13px;}
+.pcw-logo-sub{font-size:10px;color:#64748b;}
+.pcw-header-total{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;color:#fbbf24;}
+.pcw-nav{background:#fff;border-bottom:1px solid #e2e8f0;display:flex;padding:0 20px;overflow-x:auto;}
+.pcw-tab{padding:10px 14px;font-size:12px;font-weight:500;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;color:#64748b;background:none;border-top:none;border-left:none;border-right:none;transition:color .15s,border-color .15s;}
+.pcw-tab:hover{color:#1e293b;}
+.pcw-tab.active{color:#2563eb;border-bottom-color:#2563eb;font-weight:600;}
+.pcw-tab-br{color:#dc2626!important;}
+.pcw-tab-br.active{border-bottom-color:#dc2626!important;}
+.pcw-main{padding:12px;max-width:1800px;margin:0 auto;min-height:calc(100vh - 100px);}
+.pcw-card{background:#fff;border-radius:12px;border:1px solid #e2e8f0;padding:14px;}
+.pcw-h3{font-size:11px;font-weight:700;color:#374151;border-bottom:1px solid #f1f5f9;padding-bottom:7px;margin-bottom:12px;letter-spacing:.04em;text-transform:uppercase;}
+.pcw-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.col-span-2{grid-column:span 2;}
+.pcw-label{display:block;font-size:10px;font-weight:600;color:#64748b;margin-bottom:3px;letter-spacing:.04em;text-transform:uppercase;}
+.pcw-input{width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:6px 9px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;color:#1e293b;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s;box-sizing:border-box;}
+.pcw-input:focus{border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+.pcw-pct{position:absolute;right:7px;top:50%;transform:translateY(-50%);font-size:10px;color:#94a3b8;pointer-events:none;}
+.pcw-btn-primary{background:#2563eb;color:#fff;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:600;border:none;cursor:pointer;transition:background .15s;font-family:'IBM Plex Sans',sans-serif;}
+.pcw-btn-primary:hover{background:#1d4ed8;}
+.pcw-btn-primary:disabled{background:#93c5fd;cursor:not-allowed;}
+.pcw-btn-secondary{background:#fff;color:#374151;border:1px solid #e2e8f0;padding:7px 14px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;transition:border-color .15s,color .15s;font-family:'IBM Plex Sans',sans-serif;}
+.pcw-btn-secondary:hover{border-color:#3b82f6;color:#2563eb;}
+.pcw-btn-secondary:disabled{opacity:.4;cursor:not-allowed;}
+.pcw-bu-btn{flex:1;padding:6px;border-radius:6px;font-size:12px;font-weight:700;border:1.5px solid #e2e8f0;cursor:pointer;background:#fff;color:#475569;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
+.pcw-bu-btn.active{background:#2563eb;color:#fff;border-color:#2563eb;}
+.pcw-bu-btn:hover:not(.active){border-color:#93c5fd;}
+.pcw-ccy-btn{flex:1;padding:7px;border-radius:6px;font-size:12px;font-weight:700;border:1.5px solid #e2e8f0;cursor:pointer;background:#fff;color:#475569;font-family:'IBM Plex Mono',monospace;transition:all .15s;}
+.pcw-ccy-btn.active{background:#1e40af;color:#fff;border-color:#1e40af;}
+.pcw-ccy-btn:hover:not(.active){border-color:#93c5fd;}
+.pcw-table-wrap{background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:auto;max-height:calc(100vh - 220px);scrollbar-gutter:stable;}
+.pcw-table{width:100%;border-collapse:collapse;table-layout:auto;}
+.pcw-table th,.pcw-table td{white-space:nowrap;}
+.pcw-tr-head{background:#0f172a;position:sticky;top:0;z-index:11;}
+.pcw-row-d0 .pcw-td-sticky-left,.pcw-row-d0 .pcw-td-sticky-left-2{background:#fff;}
+.pcw-row-d1 .pcw-td-sticky-left,.pcw-row-d1 .pcw-td-sticky-left-2{background:#f8fafc;}
+.pcw-row-d2 .pcw-td-sticky-left,.pcw-row-d2 .pcw-td-sticky-left-2{background:#f0f4ff;}
+.pcw-row-d3 .pcw-td-sticky-left,.pcw-row-d3 .pcw-td-sticky-left-2{background:#f5f0ff;}
+.pcw-th{padding:9px 8px;font-size:9px;font-weight:700;letter-spacing:.07em;color:#94a3b8;text-transform:uppercase;white-space:nowrap;position:sticky!important;top:0!important;z-index:10;background:#0f172a;user-select:none;cursor:grab;}
+.pcw-th .pcw-resize-handle{cursor:col-resize;}
+.pcw-th-sticky-left{left:0;z-index:11!important;}
+.pcw-td-sticky-left{position:sticky;left:0;z-index:8;background:inherit;}
+.pcw-th-sticky-left-2{left:40px;z-index:11!important;}
+.pcw-td-sticky-left-2{position:sticky;left:40px;z-index:8;background:inherit;}
+.pcw-row:hover{background:#fefce8!important;}
+.pcw-row:hover .pcw-td-sticky-left,.pcw-row:hover .pcw-td-sticky-left-2{background:#fefce8!important;}
+.pcw-ci{background:transparent;border:none;font-size:12px;color:#1e293b;outline:none;border-radius:4px;padding:2px 4px;font-family:'IBM Plex Sans',sans-serif;transition:box-shadow .15s,background .15s;width:100%;box-sizing:border-box;}
+.pcw-ci:focus{box-shadow:0 0 0 2px rgba(59,130,246,.25);background:#eff6ff;}
+input:focus[data-cell],select:focus[data-cell]{box-shadow:0 0 0 2px rgba(59,130,246,.4)!important;background:#dbeafe!important;}
+.pcw-ms{background:transparent;border:none;font-size:11px;color:#64748b;outline:none;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;max-width:100%;}
+.pcw-badge-bom{font-size:8px;background:#dbeafe;color:#1d4ed8;font-weight:700;padding:1px 4px;border-radius:3px;letter-spacing:.04em;white-space:nowrap;}
+.pcw-manual-price{background:#fef3c7!important;color:#92400e!important;border-color:#fbbf24!important;}
+[data-theme="dark"] .pcw-manual-price{background:#78350f!important;color:#fde68a!important;border-color:#d97706!important;}
+.pcw-badge-est{font-size:8px;background:#fef3c7;color:#92400e;font-weight:700;padding:1px 5px;border-radius:3px;letter-spacing:.04em;white-space:nowrap;cursor:help;border:1px solid #fde68a;}
+[data-theme="dark"] .pcw-badge-est{background:#451a03;color:#fbbf24;border-color:#78350f;}
+.pcw-btn-sub{font-size:9px;background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:4px;padding:1px 5px;cursor:pointer;white-space:nowrap;}
+.pcw-btn-rm{font-size:9px;background:#fff1f2;color:#be123c;border:1px solid #fda4af;border-radius:4px;padding:1px 5px;cursor:pointer;}
+.pcw-btn-note{font-size:11px;background:#fffbeb;color:#92400e;border:1px solid #fde68a;border-radius:4px;padding:1px 5px;cursor:pointer;transition:all .15s;}
+.pcw-btn-quotes{font-size:9px;background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;border-radius:4px;padding:1px 5px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pcw-btn-quotes.has-quotes{background:#e0f2fe;border-color:#38bdf8;color:#0c4a6e;font-weight:600;}
+.pcw-btn-quotes:hover{background:#bae6fd;}
+.pcw-btn-note.has-note{background:#fef3c7;border-color:#f59e0b;color:#b45309;}
+.pcw-btn-note:hover{background:#fde68a;}
+.pcw-notes-input{width:100%;border:1px solid #e2e8f0;border-radius:6px;padding:5px 8px;font-size:11px;font-family:'IBM Plex Sans',sans-serif;color:#475569;background:#fefce8;outline:none;resize:vertical;transition:border-color .15s;}
+.pcw-notes-input:focus{border-color:#f59e0b;box-shadow:0 0 0 2px rgba(245,158,11,.12);}
+.pcw-heading-row{background:#f1f5f9;border-bottom:1px solid #e2e8f0;}
+.pcw-heading-tag{font-size:11px;font-weight:700;color:#7c3aed;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:4px;padding:1px 6px;flex-shrink:0;font-family:'IBM Plex Mono',monospace;}
+.pcw-heading-input{background:transparent;border:none;font-size:12px;font-weight:600;color:#374151;outline:none;font-family:'IBM Plex Sans',sans-serif;letter-spacing:.02em;width:100%;}
+.pcw-heading-input::placeholder{color:#94a3b8;font-weight:400;}
+.pcw-heading-input:focus{outline:1px solid #ddd6fe;border-radius:4px;}
+[data-theme="dark"] .pcw-heading-row{background:#161f30;border-bottom-color:#334155;}
+[data-theme="dark"] .pcw-heading-tag{color:#a78bfa;background:#2e1065;border-color:#4c1d95;}
+[data-theme="dark"] .pcw-heading-input{color:#c4b5fd;}
+[data-theme="dark"] .pcw-heading-input::placeholder{color:#4b5563;}
+.pcw-row-d0{background:#fff;}
+.pcw-row-d1{background:#f8fafc;}
+.pcw-row-d2{background:#f0f4ff;}
+.pcw-row-d3{background:#f5f0ff;}
+[data-theme="dark"] .pcw-row-d0{background:#1e293b;}
+[data-theme="dark"] .pcw-row-d1{background:#1a2438;}
+[data-theme="dark"] .pcw-row-d2{background:#1a1f38;}
+[data-theme="dark"] .pcw-row-d3{background:#1e1a33;}
+/* ── Table display options ───────────────────────────────── */
+.pcw-table-gridlines .pcw-table td,.pcw-table-gridlines .pcw-table th{border:1px solid #94a3b8;}
+[data-theme="dark"] .pcw-table-gridlines .pcw-table td,[data-theme="dark"] .pcw-table-gridlines .pcw-table th{border-color:#64748b;}
+/* Item separator: stronger top border on every top-level row */
+.pcw-table-gridlines .pcw-table .pcw-row-d0 td{border-top:2px solid #475569;}
+[data-theme="dark"] .pcw-table-gridlines .pcw-table .pcw-row-d0 td{border-top-color:#94a3b8;}
+/* BOM sub-rows: match column line weight */
+.pcw-table-gridlines .pcw-table .pcw-row-d1 td,.pcw-table-gridlines .pcw-table .pcw-row-d2 td,.pcw-table-gridlines .pcw-table .pcw-row-d3 td{border-top:1px solid #94a3b8;border-bottom:1px solid #94a3b8;}
+[data-theme="dark"] .pcw-table-gridlines .pcw-table .pcw-row-d1 td,[data-theme="dark"] .pcw-table-gridlines .pcw-table .pcw-row-d2 td,[data-theme="dark"] .pcw-table-gridlines .pcw-table .pcw-row-d3 td{border-top-color:#94a3b8;border-bottom-color:#94a3b8;}
+/* Sub-BOM group boundary: dashed line ABOVE depth-1 sub-BOM parent, BELOW its last descendant */
+.pcw-table-gridlines .pcw-table{--pcw-groupline-color:#475569;--pcw-subbom-color:#334155;}
+[data-theme="dark"] .pcw-table-gridlines .pcw-table{--pcw-groupline-color:#cbd5e1;--pcw-subbom-color:#cbd5e1;}
+.pcw-table-gridlines .pcw-table tr.pcw-bom-sub-parent td{background-image:repeating-linear-gradient(90deg,var(--pcw-subbom-color) 0,var(--pcw-subbom-color) 6px,transparent 6px,transparent 12px)!important;background-repeat:no-repeat!important;background-position:top left!important;background-size:100% 2px!important;}
+.pcw-table-gridlines .pcw-table tr.pcw-bom-sub-last td,
+.pcw-table-gridlines .pcw-table .pcw-row-d1:has(+.pcw-row-d0) td{background-image:repeating-linear-gradient(90deg,var(--pcw-subbom-color) 0,var(--pcw-subbom-color) 6px,transparent 6px,transparent 12px)!important;background-repeat:no-repeat!important;background-position:bottom left!important;background-size:100% 2px!important;}
+/* Close BOM group — thick bottom on last child before next item (box-shadow: doesn't add layout height, unlike border, so virtual-scroll row calibration stays accurate on large BOMs) */
+.pcw-table-gridlines .pcw-table .pcw-row-d1:has(+.pcw-row-d0) td,
+.pcw-table-gridlines .pcw-table .pcw-row-d2:has(+.pcw-row-d0) td,
+.pcw-table-gridlines .pcw-table .pcw-row-d3:has(+.pcw-row-d0) td,
+.pcw-table-gridlines .pcw-table tbody tr.pcw-row-d1:last-child td,
+.pcw-table-gridlines .pcw-table tbody tr.pcw-row-d2:last-child td,
+.pcw-table-gridlines .pcw-table tbody tr.pcw-row-d3:last-child td{box-shadow:inset 0 -2px 0 0 var(--pcw-groupline-color);}
+/* Note rows: match BOM inner line weight */
+.pcw-table-gridlines .pcw-table .pcw-note-row td{border-top:1px solid #94a3b8;border-bottom:1px solid #94a3b8;}
+[data-theme="dark"] .pcw-table-gridlines .pcw-table .pcw-note-row td{border-top-color:#475569;border-bottom-color:#475569;}
+.pcw-table-density-compact .pcw-table td,.pcw-table-density-compact .pcw-table th{padding-top:2px!important;padding-bottom:2px!important;}
+.pcw-table-density-comfortable .pcw-table td,.pcw-table-density-comfortable .pcw-table th{padding-top:7px!important;padding-bottom:7px!important;}
+.pcw-dup-input{border-color:#fbbf24 !important;background:#fffbeb !important;}
+@keyframes pcw-flash{0%{background:inherit;}10%{background:#fde047 !important;}60%{background:#fde047 !important;}100%{background:inherit;}}
+.pcw-flash-row{animation:pcw-flash 2s ease;}
+[data-theme="dark"] .pcw-dup-input{border-color:#b45309 !important;background:#451a03 !important;}
+.pcw-pricelist-tag{font-size:8px;background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;border-radius:3px;padding:1px 4px;font-weight:700;white-space:nowrap;letter-spacing:.04em;}
+.pcw-empty{text-align:center;padding:48px;color:#94a3b8;font-size:13px;}
+.pcw-hint{font-size:11px;color:#94a3b8;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:5px 10px;}
+.pcw-info-box{font-size:11px;padding:8px 10px;border-radius:8px;border:1px solid;line-height:1.5;}
+.pcw-note{padding:4px 10px;margin-bottom:6px;border-radius:6px;font-size:11px;line-height:1.4;}
+.pcw-note strong{font-weight:600;}
+.pcw-note .text-xs{font-size:11px;}
+[data-theme="dark"] .pcw-note{background:#1e293b !important;border-color:#334155 !important;color:#cbd5e1 !important;}
+.pcw-cit-notice{font-size:11px;color:#991b1b;background:#fef2f2;border:1px solid #fecaca;border-radius:6px;padding:4px 8px;margin-top:6px;font-weight:500;}
+.pcw-hero{background:linear-gradient(135deg,#0f172a 0%,#1e3a8a 55%,#1d4ed8 100%);color:#fff;border-radius:14px;padding:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;box-shadow:0 4px 24px rgba(15,23,42,.4);}
+.pcw-hero-meta{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#93c5fd;margin-bottom:4px;}
+.pcw-hero-title{font-size:20px;font-weight:700;margin-bottom:3px;}
+.pcw-hero-sub{font-size:12px;color:#94a3b8;}
+.pcw-hero-total{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:30px;color:#fbbf24;}
+.pcw-pill{font-size:10px;background:rgba(255,255,255,.1);padding:2px 8px;border-radius:20px;color:#cbd5e1;}
+.pcw-stat-lbl{font-size:10px;color:#64748b;margin-bottom:3px;font-weight:500;}
+.pcw-stat-val{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:12px;color:#1e293b;}
+.pcw-stat-sub{font-size:10px;color:#94a3b8;margin-top:2px;}
+.pcw-kpi-dark{background:#0f172a;border-color:#334155;}
+.pcw-kpi-dark .pcw-stat-lbl{color:#94a3b8;}
+.pcw-kpi-dark .pcw-stat-sub{color:#64748b;}
+.pcw-sp-badge{display:inline-block;margin-left:8px;font-size:9px;font-weight:700;letter-spacing:.05em;background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:1px 6px;vertical-align:middle;text-transform:uppercase;}
+.pcw-btn-sp{background:#2563eb;color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;transition:background .15s;}
+.pcw-btn-sp:hover{background:#1d4ed8;}
+.pcw-btn-sp:disabled{background:#93c5fd;cursor:not-allowed;}
+.pcw-btn-history{font-size:10px;background:#fff;border:1px solid #e2e8f0;border-radius:4px;padding:1px 4px;cursor:pointer;transition:all .15s;line-height:1.4;}
+.pcw-btn-history:hover{border-color:#f59e0b;background:#fffbeb;}
+.pcw-btn-cost-history{font-size:10px;background:#fff;border:1px solid #e2e8f0;border-radius:4px;padding:1px 4px;cursor:pointer;transition:all .15s;line-height:1.4;}
+.pcw-btn-cost-history:hover{border-color:#2563eb;background:#eff6ff;}
+.pcw-status-quoted{font-size:9px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:4px;padding:1px 6px;font-weight:600;}
+.pcw-status-purchased{font-size:9px;background:#f0fdf4;color:#166534;border:1px solid #86efac;border-radius:4px;padding:1px 6px;font-weight:600;}
+.pcw-sp-results{border:1px solid #bfdbfe;border-radius:8px;overflow:hidden;margin-top:4px;box-shadow:0 4px 12px rgba(37,99,235,.1);max-height:220px;overflow-y:auto;}
+.pcw-sp-result-row{padding:8px 12px;cursor:pointer;border-bottom:1px solid #eff6ff;transition:background .1s;}
+.pcw-sp-result-row:last-child{border-bottom:none;}
+.pcw-sp-result-row:hover{background:#eff6ff;}
+.pcw-sp-result-name{color:#1e293b;}
+.pcw-sp-result-details{color:#64748b;}
+[data-theme="dark"] .pcw-sp-results{border-color:#334155;background:#1e293b;}
+[data-theme="dark"] .pcw-sp-result-row{border-bottom-color:#334155;}
+[data-theme="dark"] .pcw-sp-result-row:hover{background:#0f172a;}
+[data-theme="dark"] .pcw-sp-result-name{color:#e2e8f0;}
+[data-theme="dark"] .pcw-sp-result-details{color:#94a3b8;}
+.pcw-drag-handle{color:#94a3b8;font-size:11px;cursor:grab;user-select:none;margin-right:4px;line-height:1;}
+.pcw-drag-handle:active{cursor:grabbing;}
+tr[draggable="true"]:active{cursor:grabbing;}
+.pcw-resize-handle{position:absolute;top:0;right:0;width:10px;height:100%;cursor:col-resize;z-index:20;background:transparent;transition:background .15s;display:flex;align-items:center;justify-content:center;}
+.pcw-resize-handle::after{content:'';position:absolute;top:15%;right:3px;width:3px;height:70%;background:rgba(148,163,184,.4);border-radius:2px;transition:all .15s;}
+.pcw-resize-handle:hover{background:rgba(37,99,235,.12);}
+.pcw-resize-handle:hover::after{background:#3b82f6;width:3px;box-shadow:0 0 4px rgba(59,130,246,.5);}
+.pcw-th-resizable{position:relative;user-select:none;cursor:grab;}
+.pcw-th-resizable:active{cursor:grabbing;}
+.pcw-th-resizable:hover .pcw-resize-handle::after{background:rgba(148,163,184,.7);}
+.pcw-input-invalid{border-color:#ef4444 !important;background:#fef2f2 !important;}
+.pcw-input-invalid:focus{box-shadow:0 0 0 2px rgba(239,68,68,.12) !important;}
+⚠️PCW Feed not connectedAutofills, pricing history, cost lookups and supplier search are unavailable.+ Connect Feed FileGo to Setup →GCSFixture<build>✓ Approve & LockCIW · Q-TEST Rev 0 · Test CoSell CCY: USDLanded: 5,704.006,981.88 USDCost Confidence:Very High⚠️ 4↺🌙📤 Upload🗑 Reset💾 ▾⌨️ Shortcuts
+===== TAB ⚙ Setup
+
+Project Information
+Project Name
+[Fixture]
+Quote Reference
+[Q-TEST]
+Revision (number)
+[0]
+Business Unit
+CIW ECL CIT CIA
+Incoterm
+[EXW]
+Freight Payment Term
+[— select —]
+Payment Terms
+[]
+RFQ Date
+[2026-11-01]
+Revision Date
+[]
+Notes
+[]
+Customer BP List
+Search BP List
+[] 🔍 Search
+⚠ No BP List connected — go to Setup → Data Sources to connect your feed file.
+Customer Name
+[Test Co]
+Customer Code
+[C1]
+Country
+[UK]
+Inside Sales
+[]
+Outside Sales
+[]
+Currency & Exchange Rates
+Selling Currency
+USD GBP EUR ARS BRL
+Rates (per 1 USD)
+USD
+[1]
+GBP
+[0.79]
+EUR
+[0.92]
+ARS
+[1000]
+BRL
+[5.8]
+Default Margins & Settings
+Dealer/Agent % and Discount Mitigation % are set here and applied uniformly to all items. Margin and Contingency are editable per item.
+💡 How Discounts Work:
+Discount Mitigation % (here) = Added to your margin calculation to build in buffer for expected discounts
+Discount % (per item in Costing) = Actual discount offered to customer, applied after sell price
+Example: With 5% mitigation built in, you can give a 5% discount and still hit your target margin!
+Default Margin %
+[0.00] %
+Default Contingency %
+[0.00] %
+Dealer / Agent %
+[0.00] %
+Discount Mitigation %
+[0.00] %
+S&A Expense %
+[10.00] %
+Default Source
+[— select —]
+💾 Save & Restore
+▶ 💾 Auto-save File ○ Not connected
+Save Package 🔀 Compare Revisions
+💾 Auto-save File: Connects to a .gcs file on your computer and writes to it automatically 2 seconds after every change. Like a desktop app — no manual saves needed. Requires one reconnect click per browser session.
+📦 Save Package: Downloads a single .zip file containing the JSON backup, a print-ready HTML document, and an Excel workbook — all named consistently. The definitive milestone action — use when issuing a quote.
+📤 Upload / 🗑 Reset: Available in the header — Upload restores a project from a .gcs file; Reset clears all data and starts fresh.
+🔗 External Links
+Salesforce Link
+[]
+SharePoint Link
+[]
+☁ Import from Salesforce Report (.csv) 📋 Import from SharePoint Properties
+📂 Data Source
+Connect your master feed Excel file. All sheets are read from a single file. Uses the browser File System Access API — Chrome/Edge only. Files are read locally; nothing is uploaded.
+📊 PCW Feed ○ Not connected
++ Connect file
+Sales Quotes · Sales Orders · Purchase Quotes · Purchase Orders · Currency Rates
+⚠ Browser file handles are session-only and can be lost if the tab is backgrounded for a long time. The app detects this automatically when you return to the tab and will prompt you to reconnect. Click ↻ Refresh after updating the file.
+⚙️ Preferences
+Language
+[English]
+Date Format
+[US (MM/DD/YYYY)]
+CIW defaults to US date format. Language affects UI labels.
+Table Display
+[ ] Cell gridlines
+[ ] Completion colour coding
+Row density [Normal]
+✅ Approval & Audit Log
+▴
+🔓
+Quote unlocked — editing enabled
+✓ Approve & Lock
+No approvals recorded yet. Click Approve & Lock to create the first entry.
+
+===== TAB 📋 Costing
+
+Sheet 1 ✏️ ×
+Options
++ Add Sheet
+🎉 All items ready to quote! — review 2 validation concerns before approving 100 %
+＋ Add Item + Add Section 📋 Copy for SAP B1 📥 Import Line Items from SAP Quote (.xlsx) ⚡ Quickest Lead 💰 Lowest Cost
+📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
+[] 🔍
+⌨️ Tip: Use Tab , Enter , Esc to navigate cells
+↩ Undo ↪ Redo 🔎 Find & Replace
+👁️ Columns
+📊 Excel Options ▼
+🧱 Import SAP BOM
+| [ ] | Part No. ⇅
+| Description ⇅
+| Drawing No.
+| Supplier ⇅
+| Qty ⇅
+| Unit Cost ⇅
+| Total Cost ⇅
+| Landed Cost
+| Lead Time (D) ⇅ D
+| Margin / Ctg % ⇅
+| Unit Sell Price ⇅
+| Total Sell Price ⇅
+| Discount%
+| Cost Source ⇅
+| OPTIONS
+|
+⋮⋮ § [] ✕
+| [ ] |
+⋮⋮
+[P-47]
+📈 💰
+|
+[Part 47]
+|
+[]
+|
+[Supplier A]
+| [3.00] |
+[100.00] [USD]
+| 300.00 USD | 300.00 USD | [10.00] |
+[25.00] / [0.00]
+|
+✏️
+133.33 USD
+after 5 % disc: 126.67
+|
+400.00 USD
+after 5 % disc: 380.00
+| [5.00] |
+Q [Quotation]
+|
+✓
+✎ ⚖ +Sub ▾ ✕
+| [ ] |
+⋮⋮
+[P-48]
+📈 💰
+|
+[Part 48]
+|
+[]
+|
+[Supplier A]
+| [1.00] |
+[55.00] [USD]
+| 55.00 USD | 55.00 USD | [10.00] |
+[40.00] / [0.00]
+|
+✏️
+91.67 USD
+| 91.67 USD | [0.00] |
+Q [Quotation]
+|
+✓
+✎ ⚖ +Sub ▾ ✕
+|
+⋮⋮ § [] ✕
+| [ ] |
+⋮⋮
+[P-49]
+📈 💰
+|
+[Part 49]
+|
+[]
+|
+[Supplier A]
+| [1.00] |
+[999.00] [USD]
+| 999.00 USD | 999.00 USD | [10.00] |
+[25.00] / [0.00]
+|
+✏️
+1,332.00 USD
+after 12.5 % disc: 1,165.50
+|
+1,332.00 USD
+after 12.5 % disc: 1,165.50
+| [12.50] |
+Q [Quotation]
+|
+✓
+✎ ⚖ +Sub ▾ ✕
+|
+[]
+| TOTALS | 5,704.00 USD | 5,704.00 USD | | | | 6,981.88 USD | | |
+| GRAND TOTAL | 6,981.88 USD | | |
+
+===== TAB 🚢 Freight & Tariffs
+
+Note: Items with Source = Pricelist are excluded from inbound freight and duty allocation. All other sources are included proportionally by COGS.
+Inbound Freight Entries
+All entries summed and allocated proportionally to eligible items. Add as many entries as needed.
+No inbound freight entries yet.
++ Add Inbound Entry
+Total inbound freight: 0.00 USD
+🏛 Tariff (per-item, set in Costing tab) 0.00 USD
+Outbound Freight Entries
+Each outbound entry is a separate quoted line with its own margin. Not allocated to item COGS. Add up to 20 entries.
+No outbound freight entries yet.
++ Add Outbound Entry
+Total out cost: 0.00 USD Total out sell: 0.00 USD
+📦 Packing & Crating
+Added as a separate quoted line item (distributes into item sell prices when outbound freight distribution is enabled). Active whenever enabled — a warning is shown if Incoterm is EXW.
+[ ] Enable Packing & Crating
+
+===== TAB 📅 Schedule
+
+Project Schedule
+⟳ Sync from data
+Unit:
+Days Weeks Months
+Project Start
+[2026-11-01]
+Total Lead Time
+25 d
+3.6 w · 0.8 mo
+EXW Fulfilment
+<date>
+Longest Lead Times
+Item P-47 Part 47
+10 d
+| # | Phase | Days | Start | End | Timeline |
+| 1 | [PO Processing] |
+[5.00]
+| <date> | <date> |
+|
+↓ ✕
+| 2 | [Fabrication] |
+[20.00]
+| <date> | <date> |
+|
+↑ ✕
++ Add Phase
+
+===== TAB 📊 Summary
+
+CIW · Rev 0
+Fixture
+Q-TEST · Test Co · UK
+Incoterm: EXW Fulfilment: 2026-11-26 25 d lead time 5 items Very High Cost Confidence
+Sell Price
+6,981.88
+USD
+⚠ Gross margin below 35% — this quote requires leadership approval before issuing. Current margin: 18.30%.
+Landed COGS
+5,704.00 USD
+Inc. all duties & freight
+Grand Total
+6,981.88 USD
+GM: 18.30% | EBITDA: 8.30%
+📊 EBITDA Calculation: Gross Margin ( 18.30% ) - S&A Expense ( 10.00% ) = EBITDA 8.30%
+Expected profit margin after Sales & Administration expenses. Configure S&A % in Setup tab.
+Currency Breakdown
+▶
+1 currency • Click to expand
+Margin Analysis
+▶
+5 items analyzed • Click to expand
+Cost Breakdown by Sheet
+| Sheet | Items | Landed Cost | Sell Price | GM% | % of Total Cost
+| Sheet 1 | 3 | 1,354.00 | 1,637.17 | 17.30% | 23.74%
+| Options | 2 | 4,350.00 | 5,344.72 | 18.61% | 76.26%
+Selected Suppliers
+| Supplier | Total Projected Spend (USD) | % of Costs | Longest Lead Time (Days)
+| Supplier A | 5,704.00 | 100.00% | 10
+Price Build-Up
+Items COGS 5,704.00 ( 81.7 %)
+Inbound Freight (allocated) 0.00 ( 0.0 %)
+Import Taxes / Tariffs 0.00 ( 0.0 %)
+Items Margin & Contingency 1,464.38 ( 21.0 %)
+💸 Item Discounts - 186.50 ( 2.7 %)
+TOTAL (= Grand Total) 6,981.88
+✓ Always matches grand total
+Quote Quality
+★★★★★ Excellent
+▾
+How complete and well-sourced is this quote?
+Items ready to quote Complete
+Source quality (Quotation/Pricelist) Complete
+Lead times entered Complete
+Project information complete Partial
+Freight & schedule configured Incomplete
+Project Details
+BU CIW
+Customer Test Co
+Country UK
+Quote Ref Q-TEST Rev 0
+Dealer/Agent 0.00%
+Outbound Freight Margin 0.00
+Freight Payment Term —
+Payment Terms —
+Inside Sales —
+Outside Sales —
+Start <date>
+Lead Time 25 days
+Fulfilment <date>
+Cost Confidence by Source
+Very High
+COGS-weighted average: Actuals=5 · Quotation/Pricelist=4 · Estimate=3 · Budget=2 · Assumption=1
+Quotation 5 item s · 100.00% of value
+Export PDF Export HTML Approval Email
+
+===== ERRORS
+
