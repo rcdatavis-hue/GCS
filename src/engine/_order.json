@@ -4,6 +4,7 @@
  "constants.js",
  "i18n.js",
  "calc.js",
+ "gcs.js",
  "pricing.js",
  "feed.js",
  "state.js"

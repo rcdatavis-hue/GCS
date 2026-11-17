@@ -176,7 +176,8 @@ while (schemaVer < SCHEMA_VERSION) {
  schemaVer++;
 }
 // Re-normalise back to short keys after migration
-return { ...d, schemaVersion: SCHEMA_VERSION };
+// GCS: convert lines from before markup levels (defined in engine/gcs.js, loaded after this file)
+return gcsMigrateData({ ...d, schemaVersion: SCHEMA_VERSION });
 };
 
 const validateLoadedData = (data) => {
@@ -793,18 +794,20 @@ return roots;
 const calcNode = (n, rates, sellCcy, opts={}) => {
 const cv = (a,c) => conv(a, c||"USD", sellCcy, rates);
 
+// GCS: a line's unit cost is scaled and inflated (Excel: cost_USD × scaling × (1 + inflation)).
+const costFactor = gcsCostFactor(n, opts.proj);
 if (!n._ch.length) {
- const unitC = cv(n.unitCost||0, n.ccy);
+ const unitC = cv(n.unitCost||0, n.ccy) * costFactor;
  const totalCOGS = unitC * (n.qty||1);
  const importedSubCount = 0;
  const afrmmSubCount = 0;
  // Leaf node: critical path = its own lead time (supplier delivery time)
  const criticalPathDays = n.leadTimeOverride ?? (n.leadTime||0);
- return { ...n, _ch: [], unitC, totalCOGS, importedSubCount, afrmmSubCount, criticalPathDays };
+ return { ...n, _ch: [], unitC, totalCOGS, importedSubCount, afrmmSubCount, criticalPathDays, costFactor };
 }
 
 const children = n._ch.map(c => calcNode(c, rates, sellCcy, opts));
-const ownC = cv(n.unitCost||0, n.ccy);
+const ownC = cv(n.unitCost||0, n.ccy) * costFactor;
 const childSum = children.reduce((s,c) => s + c.totalCOGS, 0);
 const totalCOGS = (childSum + ownC) * (n.qty||1);
 
@@ -829,6 +832,7 @@ return {
  importedSubCount,
  afrmmSubCount,
  criticalPathDays,
+ costFactor,
 };
 };
 
@@ -859,6 +863,265 @@ const applyCustomerMitigation = (prev, next) => {
   return next;
 };
 
+// ═══ GCS COSTING RULES (Excel Global Cost Sheet V3.8 methodology) ════════════
+// Reference data and pure functions for the project-costing method taken from the Excel GCS
+// (see project doc claude/GCS_EXCEL_LOGIC_MAP.md for the Excel formulas each piece mirrors).
+// No React. Used by calcNode (line cost), computePricing (markup) and computeGcsSummary (P&L).
+
+// ── Markup levels: margin on sell, price = cost / (1 − %). Excel plant-section column Z "User Set %". ──
+const GCS_MARKUP_LEVELS = ['PASS', 'CPM (A)', 'CPM (B)', 'CROWN (A)', 'CROWN (B)', 'CROWN (C)'];
+const GCS_CUSTOM_LEVEL = 'CUSTOM';
+const GCS_DEFAULT_MARKUP = { 'PASS': 0, 'CPM (A)': 10, 'CPM (B)': 46.5, 'CROWN (A)': 48, 'CROWN (B)': 60, 'CROWN (C)': 60 };
+const GCS_MARKUP_NOTES = {
+  'PASS': 'No margin',
+  'CPM (A)': 'Business/Equipment (Flakers, C…)',
+  'CPM (B)': 'Beta Raven / D&G',
+  'CROWN (A)': 'Contribution Margin (A)',
+  'CROWN (B)': 'Contribution Margin (B)',
+  'CROWN (C)': 'Contribution Margin (C)',
+};
+const GCS_DEFAULT_LEVEL = 'CROWN (A)';
+
+// ── Mandatory provisions per tab (all sold at PASS = no margin) ──
+//   startupRisk: % of the tab's sales (lines + the other provisions)     → category I
+//   fcaPacking:  % of the tab's line cost                                 → category G
+//   c5Duty:      % of the cost of sub-category C5 lines (free-issue parts) → category H
+//   h1Duty:      % of the cost of sub-category H1 lines (country duties)   → category H
+const GCS_DEFAULT_PROVISIONS = { startupRisk: 1, fcaPacking: 2, c5Duty: 5.1, h1Duty: 0 };
+const GCS_PROVISION_LABELS = {
+  startupRisk: 'Start-up Risk Factor', fcaPacking: 'FCA / Packing',
+  c5Duty: 'Free Issue Fabricator (C5)', h1Duty: 'Import Duties Country Specific (H1)',
+};
+
+// ── Cost categories and sub-categories ──
+const GCS_CATEGORIES = [
+  { code: 'A', name: 'Fabricated Equipment' }, { code: 'B', name: '3rd Party CPM' },
+  { code: 'C', name: '3rd Party Purchase' }, { code: 'D', name: 'Automation' },
+  { code: 'E', name: 'Automation Instruments' }, { code: 'F', name: 'Electrical Components' },
+  { code: 'G', name: 'Internal Freight' }, { code: 'H', name: 'Import Duties' },
+  { code: 'I', name: 'Start-up Risk Factor' },
+];
+const GCS_SUBCATEGORIES = [
+  { code: 'A1', name: 'Pipework & Ducting' }, { code: 'A2', name: 'Fabricated Equipment' },
+  { code: 'A3', name: 'Fabricated Vessels' }, { code: 'C1', name: 'Valves & Fittings' },
+  { code: 'C2', name: 'Conveyors & Elevators' }, { code: 'C3', name: 'Pumps' },
+  { code: 'C4', name: 'Specialist Equipment' }, { code: 'C5', name: 'Crown Free-Issue Parts' },
+  { code: 'H1', name: 'Import Duties (Country Specific)' },
+];
+
+// ── Bid locations (Excel Engine A:C): M&E and S&A as % of sales ──
+const GCS_BID_LOCATIONS = [
+  { name: 'Americas - USA', mAndE: 10, sAndA: 10 },
+  { name: 'Americas - Brazil', mAndE: 10, sAndA: 10 },
+  { name: 'Americas - Argentina', mAndE: 10, sAndA: 10 },
+  { name: 'Europe - UK', mAndE: 10, sAndA: 10 },
+  { name: 'Asia - China', mAndE: 10, sAndA: 10 },
+];
+
+// ── Segments and EBITDA targets (Excel Engine M:O): % for projects over / under $1m ──
+const GCS_SEGMENTS = [
+  { name: 'Crush (Preparation & Pressing)', over1m: 21, under1m: 30 },
+  { name: 'Crush (Extraction)', over1m: 21, under1m: 30 },
+  { name: 'Liquids (Refining, Biodiesel, Oleochemicals)', over1m: 20, under1m: 30 },
+  { name: 'Liquids (Renewable Diesel Pretreatment)', over1m: 21, under1m: 30 },
+  { name: 'Specialty (Protein Concentrate)', over1m: 36, under1m: 45 },
+  { name: 'New Innovations', over1m: 41, under1m: 41 },
+  { name: 'Expanded Scope', over1m: 30, under1m: 30 },
+  { name: 'Specialty Hemp-CBD', over1m: 36, under1m: 45 },
+  { name: 'Specialty - All Other', over1m: 36, under1m: 45 },
+  { name: 'Aftermarket: POC Crush', over1m: 21, under1m: 30 },
+  { name: 'Aftermarket: POC Liquids', over1m: 20, under1m: 30 },
+  { name: 'Aftermarket: POC Specialty', over1m: 36, under1m: 45 },
+];
+const GCS_TARGET_BAND_WIDTH = 5;   // ON TARGET = target to target + 5 points
+const GCS_VALUE_THRESHOLD_USD = 1000000;
+
+// ── Project-level defaults ──
+const GCS_DEFAULT_INFLATION_PER_MONTH = 0.5;   // % per whole month since the cost date (Excel: DATEDIF(..,"m")*0.5%)
+const GCS_DEFAULT_SCALING_EXPONENT = 0.6;      // six-tenths rule: (plant feed / equipment size)^0.6
+const GCS_DEFAULT_ROUND_TO = 1000;             // proposal lines rounded UP to this
+
+// Tab settings with defaults filled in. A costing sheet is {id, name, ...gcs settings}.
+const gcsSheetSettings = sheet => {
+  const s = sheet || {};
+  return {
+    type: s.type === 'option' ? 'option' : 'section',
+    include: s.type === 'option' ? !!s.include : true,
+    markup: { ...GCS_DEFAULT_MARKUP, ...(s.markup || {}) },
+    defaultLevel: s.defaultLevel || GCS_DEFAULT_LEVEL,
+    discount: (s.discount === null || s.discount === undefined || s.discount === '') ? null : Number(s.discount),
+    segment: s.segment || '',
+    provisions: { ...GCS_DEFAULT_PROVISIONS, ...(s.provisions || {}) },
+  };
+};
+
+// Map sheetId → settings; items whose sheetId matches no sheet belong to the first sheet.
+const gcsSheetIndex = sheets => {
+  const list = Array.isArray(sheets) && sheets.length ? sheets : [{ id: 'main', name: 'Sheet 1' }];
+  const byId = new Map(list.map(s => [s.id, gcsSheetSettings(s)]));
+  const firstId = list[0].id;
+  const idOf = item => (item && byId.has(item.sheetId) ? item.sheetId : firstId);
+  return { list, byId, firstId, idOf, settingsOf: item => byId.get(idOf(item)) };
+};
+
+// Margin % for a line.
+//   markupLevel unset   → follows the tab's default level (new lines)
+//   markupLevel CUSTOM  → the line's own margin % (also every line in a file from before markup levels,
+//                         converted on load by gcsMigrateData so old prices are unchanged)
+//   markupLevel a level → that level's % in the tab's markup table
+const gcsLevelOf = (item, settings) => item.markupLevel || (settings ? settings.defaultLevel : GCS_DEFAULT_LEVEL);
+const gcsMarkupPct = (item, settings) => {
+  const level = gcsLevelOf(item, settings);
+  if (level === GCS_CUSTOM_LEVEL) return item.margin || 0;
+  const pct = settings && settings.markup ? settings.markup[level] : undefined;
+  return pct === undefined || pct === null || pct === '' || isNaN(Number(pct)) ? (GCS_DEFAULT_MARKUP[level] || 0) : Number(pct);
+};
+
+// Whole months from d1 to d2 (Excel DATEDIF "m"). 0 when either date is missing or d1 is after d2.
+const gcsMonthsBetween = (d1, d2) => {
+  const a = d1 ? new Date(d1) : null, b = d2 ? new Date(d2) : null;
+  if (!a || !b || isNaN(a) || isNaN(b) || a > b) return 0;
+  let m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if (b.getDate() < a.getDate()) m -= 1;
+  return Math.max(0, m);
+};
+const gcsCostingDate = proj => proj?.costingDate || new Date().toISOString().slice(0, 10);
+
+// Inflation and scaling: automatic like Excel unless the line has its own value.
+const gcsAutoInflation = (item, proj) => {
+  const rate = proj?.inflationPerMonth ?? GCS_DEFAULT_INFLATION_PER_MONTH;
+  return gcsMonthsBetween(item.costDate, gcsCostingDate(proj)) * rate;   // %
+};
+const gcsAutoScaling = (item, proj) => {
+  const feed = Number(proj?.plantFeed) || 0, size = Number(item.sizeCapacity) || 0;
+  if (!(feed > 0) || !(size > 0)) return 1;
+  return Math.pow(feed / size, proj?.scalingExponent ?? GCS_DEFAULT_SCALING_EXPONENT);
+};
+const gcsHasValue = v => v !== null && v !== undefined && v !== '' && !isNaN(Number(v));
+const gcsInflationPct = (item, proj) => gcsHasValue(item.inflationPct) ? Number(item.inflationPct) : gcsAutoInflation(item, proj);
+const gcsScaling = (item, proj) => gcsHasValue(item.scalingFactor) ? Number(item.scalingFactor) : gcsAutoScaling(item, proj);
+// Factor applied to a line's unit cost (Excel: cost_USD × Q × (1 + R)).
+const gcsCostFactor = (item, proj) => gcsScaling(item, proj) * (1 + gcsInflationPct(item, proj) / 100);
+
+// Contingency is not part of the GCS method. Files saved before (and PCW quotes) are converted on load:
+// the contingency is folded into a Custom margin so the price is unchanged. applyMargins divides by
+// (1 − m) and then (1 − c), each only when strictly between 0 and 100, so the combined margin is
+// 1 − (1 − m)(1 − c) with the same conditions.
+const gcsFoldContingency = item => {
+  const c = Number(item.contingency) || 0;
+  if (!(c > 0 && c < 100)) return item.contingency ? { ...item, contingency: 0 } : item;
+  const m = Number(item.margin) || 0;
+  const keepM = m > 0 && m < 100 ? 1 - m / 100 : 1;
+  const combined = (1 - keepM * (1 - c / 100)) * 100;
+  return { ...item, margin: combined, contingency: 0, markupLevel: GCS_CUSTOM_LEVEL,
+    _foldedContingency: { margin: m, contingency: c } };
+};
+
+const gcsSegmentTarget = (segment, projectValueUSD) => {
+  const s = GCS_SEGMENTS.find(x => x.name === segment);
+  if (!s) return null;
+  return projectValueUSD > GCS_VALUE_THRESHOLD_USD ? s.over1m : s.under1m;
+};
+const gcsBand = (ebitdaPct, targetPct) => {
+  if (targetPct === null || targetPct === undefined) return '';
+  if (ebitdaPct < targetPct) return 'LOW: BELOW TARGET';
+  if (ebitdaPct <= targetPct + GCS_TARGET_BAND_WIDTH) return 'ON TARGET';
+  return 'HIGH: MORE THAN 5% ABOVE TARGET';
+};
+const gcsCeil = (v, step) => (step > 0 ? Math.ceil(v / step - 1e-9) * step : v);
+
+// ── Commercial summary: per tab and project, Excel definitions ──
+//   COGS  = landed cost of the tab's lines + provisions
+//   Sales = line sales (after per-line discount) + provisions (sold at cost)
+//   Contribution = Sales − COGS;  M&E = Sales × M&E%;  Gross margin = Contribution − M&E
+//   S&A = Sales × S&A%;  EBITDA = Gross margin − S&A
+//   Proposal price = Sales rounded UP to roundTo; discount = tab (or project) % × rounded price
+//   Project EBITDA = Σ included tabs' EBITDA − discounts; gross margin likewise (Excel L6 = L5 + L4);
+//   percentages are of pre-discount sales (Excel Summary K5/K6 divide by J35)
+//   Shipping (outbound freight not built into prices) is its own contract line and, as in Excel,
+//   is not part of EBITDA.
+const computeGcsSummary = ({ tree, sheets, proj, pricing }) => {
+  const idx = gcsSheetIndex(sheets);
+  const mE = Number(proj.mAndE ?? 10) || 0, sA = Number(proj.sAndAExpense ?? 10) || 0;
+  const roundTo = Number(proj.roundTo ?? GCS_DEFAULT_ROUND_TO) || 0;
+  const projDiscount = Number(proj.gcsDiscount) || 0;
+  const usd = v => conv(v, proj.sellCcy, 'USD', proj.rates);
+  const { getAlloc, getItemSP, getItemNetPrice } = pricing;
+
+  const tabs = idx.list.map(sheet => {
+    const st = idx.byId.get(sheet.id);
+    const roots = tree.filter(n => idx.idOf(n) === sheet.id);
+    const lineCost = roots.reduce((s, n) => s + n.totalCOGS, 0);
+    const lineLanded = roots.reduce((s, n) => s + getAlloc(n).landed, 0);
+    const lineGross = roots.reduce((s, n) => s + getItemSP(n) * (n.qty || 1), 0);
+    const lineSales = roots.reduce((s, n) => s + getItemNetPrice(n), 0);
+    const subCost = code => roots.filter(n => n.subCat === code).reduce((s, n) => s + n.totalCOGS, 0);
+    const p = st.provisions;
+    const has = lineCost > 0;
+    const fca = has ? lineCost * (Number(p.fcaPacking) || 0) / 100 : 0;
+    const c5 = has ? subCost('C5') * (Number(p.c5Duty) || 0) / 100 : 0;
+    const h1 = has ? subCost('H1') * (Number(p.h1Duty) || 0) / 100 : 0;
+    const startup = has ? (lineSales + fca + c5 + h1) * (Number(p.startupRisk) || 0) / 100 : 0;
+    const provisions = { startupRisk: startup, fcaPacking: fca, c5Duty: c5, h1Duty: h1 };
+    const provTotal = startup + fca + c5 + h1;
+    const cogs = lineLanded + provTotal;
+    const sales = lineSales + provTotal;
+    const contribution = sales - cogs;
+    const mAndE = sales * mE / 100;
+    const grossMargin = contribution - mAndE;
+    const sAndA = sales * sA / 100;
+    const ebitda = grossMargin - sAndA;
+    const pct = v => (sales > 0 ? (v / sales) * 100 : 0);
+    const price = gcsCeil(sales, roundTo);
+    const discountPct = st.discount !== null && !isNaN(st.discount) ? st.discount : projDiscount;
+    const discount = price * discountPct / 100;
+    return { id: sheet.id, name: sheet.name, ...st, lineCount: roots.length, lineCost, lineLanded, lineGross,
+      lineSales, provisions, provTotal, cogs, sales, contribution, mAndE, grossMargin, sAndA, ebitda,
+      contributionPct: pct(contribution), grossMarginPct: pct(grossMargin), ebitdaPct: pct(ebitda),
+      price, discountPct, discount };
+  });
+
+  const included = tabs.filter(t => t.include && t.lineCount > 0);
+  const sum = k => included.reduce((s, t) => s + t[k], 0);
+  const sales = sum('sales'), cogs = sum('cogs'), discount = sum('discount');
+  const projectValueUSD = usd(sum('price'));
+  tabs.forEach(t => {
+    t.target = gcsSegmentTarget(t.segment || proj.segment, projectValueUSD);
+    t.band = t.sales > 0 ? gcsBand(t.ebitdaPct, t.target) : '';
+  });
+  const targets = included.map(t => t.target).filter(v => v !== null && v !== undefined);
+  const target = targets.length ? targets.reduce((s, v) => s + v, 0) / targets.length : null;
+  const ebitda = sum('ebitda') - discount;
+  const pct = v => (sales > 0 ? (v / sales) * 100 : 0);
+  const shippingSell = pricing.distributeOutboundFreight ? 0 : (pricing.totalOutSP || 0);
+  const shippingCost = pricing.distributeOutboundFreight ? 0 : (pricing.totalOutCost || 0);
+  const shippingPrice = gcsCeil(shippingSell, roundTo);
+  const contractBeforeDiscount = sum('price');
+  const project = {
+    sales, cogs, contribution: sales - cogs, mAndE: sum('mAndE'), grossMargin: sum('grossMargin') - discount, sAndA: sum('sAndA'),
+    discount, ebitda, contributionPct: pct(sales - cogs), grossMarginPct: pct(sum('grossMargin') - discount),
+    ebitdaPct: pct(ebitda), target, band: sales > 0 ? gcsBand(pct(ebitda), target) : '',
+    contractBeforeDiscount, shippingSell, shippingCost, shippingPrice,
+    contractValue: contractBeforeDiscount - discount + shippingPrice, projectValueUSD,
+  };
+  return { tabs, project };
+};
+
+// Load-time conversion of files saved before the GCS method (PCW .pcw quotes and GCS v0.1 files).
+// Runs once per file: the saved state carries gcsFormat afterwards. Every existing line becomes Custom
+// with its old margin, and any contingency is folded into that margin, so no price changes on load.
+const GCS_FORMAT = 1;
+const gcsMigrateData = d => {
+  if (!d || d.gcsFormat >= GCS_FORMAT || !Array.isArray(d.items)) return d;
+  const items = d.items.map(i => {
+    if (i.type === 'heading') return i;
+    const folded = gcsFoldContingency(i);
+    return folded.markupLevel ? folded : { ...folded, markupLevel: GCS_CUSTOM_LEVEL };
+  });
+  return { ...d, items, gcsFormat: GCS_FORMAT };
+};
+
+
 // ═══ SHARED PRICING ENGINE (no React) ═══════════════════════════════════════
 // Freight allocation, landed cost, Brazil import/sales tax, outbound freight, packing & crating,
 // sell prices and project totals. Pure functions of their inputs: no React, no DOM, no globals
@@ -873,8 +1136,11 @@ const applyCustomerMitigation = (prev, next) => {
 // passes a copy of a node ({...n}) simply misses the cache and gets a fresh, identical result.
 
 const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isCIT,
-  forceAllocToPricelist, forceAllocToZeroCost, distributeOutboundFreight, distributePackingCrating }) => {
+  forceAllocToPricelist, forceAllocToZeroCost, distributeOutboundFreight, distributePackingCrating, sheets }) => {
   const toSC = (amt, ccy) => conv(amt, ccy, proj.sellCcy, proj.rates);
+  // GCS: margin comes from the line's markup level in its tab's markup table (or a Custom %); no contingency.
+  const sheetIdx = gcsSheetIndex(sheets);
+  const marginOf = n => gcsMarkupPct(n, sheetIdx.settingsOf(n));
 
   const topCOGS = tree.reduce((s, n) => s + n.totalCOGS, 0);
   const totalInbFrt = frt.inbound.reduce((s, e) => s + toSC(e.cost || 0, e.ccy || "USD"), 0);
@@ -1057,7 +1323,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
   const baseLineSP = item => {
     if (item.manualSellPrice !== null && item.manualSellPrice !== undefined) return item.manualSellPrice * (item.qty || 1);
     const a = getAlloc(item);
-    return applyMargins(a.landed, { margin: item.margin || 0, contingency: item.contingency || 0,
+    return applyMargins(a.landed, { margin: marginOf(item), contingency: 0,
       dealer: proj.defaultDealer || 0, discountMitigation: proj.discountMitigation || 0 });
   };
 
@@ -1074,7 +1340,8 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
 
   // ── Packing & Crating ──
   const pc = frt.packingCrating || {};
-  const pcActive = !!(pc.enabled && proj.bu !== "CIT");
+  // GCS: packing & crating removed; the per-tab FCA/Packing provision replaces it (computeGcsSummary).
+  const pcActive = false;
   // pcBaseSPs: item base sell prices (pre-outbound-freight, pre-discount) for the % calculation
   const pcBaseSPs = (() => {
     const map = {};
@@ -1109,7 +1376,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
       baseSP = n.manualSellPrice;
     } else {
       const a = getAlloc(n);
-      const totalSP = applyMargins(a.landed, { margin: n.margin || 0, contingency: n.contingency || 0,
+      const totalSP = applyMargins(a.landed, { margin: marginOf(n), contingency: 0,
         dealer: proj.defaultDealer || 0, discountMitigation: proj.discountMitigation || 0 });
       baseSP = totalSP / (n.qty || 1);
     }
@@ -1163,7 +1430,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
     const a = getAlloc(n);
     const landed = a.landed / (n.qty || 1);
     if (landed === 0) return 0;
-    const contingency = n.contingency || 0;
+    const contingency = 0; // GCS: no contingency (replaced by inflation and scaling factors)
     const dealer = proj.defaultDealer || 0;
     const discountMitig = proj.discountMitigation || 0;
     let backedOutSP = targetSellPrice;
@@ -1191,9 +1458,9 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
 
   return {
     topCOGS, totalInbFrt, freightTagStatus, siscomex, afrmm, outEntries, totalOutSP, totalOutCost, totalOutMargin,
-    getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
+    marginOf, getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
     calculateReverseMargin, landedCOGS, itemsSP, grand, itemsSPWithTax, totalOutSPWithTax, grandWithTax, freightTaxSC,
-    outboundFreightAllocations, packingCratingAllocations, pcActive, pcTotal, pcBaseSPs,
+    outboundFreightAllocations, packingCratingAllocations, pcActive, pcTotal, pcBaseSPs, distributeOutboundFreight,
   };
 };
 
@@ -2545,9 +2812,11 @@ rows.length===0&&React.createElement("div",{style:{padding:'6px 12px',color:'#94
 rows.map(name=>{var isStale=!knownKeys.has(name.toLowerCase());return React.createElement("div",{key:name,style:rowStyle,title:isStale?'No item currently has this supplier':name,onClick:()=>toggle(name),onMouseEnter:hover,onMouseLeave:unhover},box(tagKeys.has(name.toLowerCase())),React.createElement("span",{style:{overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',flex:1}},name),isStale&&React.createElement("span",{style:{fontSize:10,color:'#fbbf24',fontStyle:'italic',flexShrink:0}},"no items"));}),
 React.createElement("div",{style:{padding:'6px 12px 4px',marginTop:2,borderTop:'1px solid #334155',fontSize:10,color:'#94a3b8'}},"Cost is shared across the ticked suppliers by COGS."))));
 };
-var FrtRow=({entry,onUpd,onRm,onQuotes,hasMargin,sellCcy,rates,isCIT,showAFRMM,supplierOptions=[],leadTimeUnit='days',setLeadTimeUnit,tagStatus,locked})=>{var costSC=conv(entry.cost||0,entry.ccy||"USD",sellCcy,rates);var margin=entry.margin||0;var isMarkup=entry.marginMode==='markup';var sellSC=hasMargin?(isMarkup?costSC*(1+margin/100):margin<100?costSC/(1-margin/100):costSC):costSC;var marginValue=sellSC-costSC;return/*#__PURE__*/React.createElement("div",{className:"flex items-center gap-2 p-2 rounded-lg border mb-2",style:{background:"#f8fafc",borderColor:"#e2e8f0"}},/*#__PURE__*/React.createElement("input",{className:"pcw-input min-w-0",style:{flex:'1 1 0'},value:entry.desc||"",onChange:e=>onUpd("desc",e.target.value),placeholder:"Description (e.g. Sea freight, Air freight)"}),/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{width:96},value:entry.cost||0,onChange:v=>onUpd("cost",v)}),/*#__PURE__*/React.createElement("select",{className:"pcw-input",style:{width:72},value:entry.ccy||"USD",onChange:e=>onUpd("ccy",e.target.value)},CURRENCIES.map(c=>/*#__PURE__*/React.createElement("option",{key:c},c))),hasMargin?/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:3,width:108,flexShrink:0}},/*#__PURE__*/React.createElement("button",{onClick:()=>onUpd('marginMode',entry.marginMode==='markup'?'margin':'markup'),title:entry.marginMode==='markup'?'Currently Markup % on cost — click to switch to Gross Margin %':'Currently Gross Margin % of sell price — click to switch to Markup %',style:{fontSize:9,padding:'1px 5px',borderRadius:3,border:'1px solid #475569',background:entry.marginMode==='markup'?'#1e3a5f':'#1e293b',color:entry.marginMode==='markup'?'#60a5fa':'#94a3b8',cursor:'pointer',flexShrink:0,lineHeight:1.6,whiteSpace:'nowrap'}},entry.marginMode==='markup'?'MK%':'GM%'),/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{flex:1,minWidth:0},value:entry.margin||0,onChange:v=>onUpd("margin",v),placeholder:"0",title:entry.marginMode==='markup'?'Markup % on cost':'Gross Margin % of sell price'})):null,showAFRMM&&isCIT&&/*#__PURE__*/React.createElement("label",{className:"flex items-center gap-1 text-xs cursor-pointer",style:{color:"#475569",width:64}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:entry.afrmm||false,onChange:e=>onUpd("afrmm",e.target.checked),className:"cursor-pointer"}),/*#__PURE__*/React.createElement("span",{title:"Additional Freight for Renewal of Merchant Marine - Maritime surcharge"},"AFRMM?")),showAFRMM&&/*#__PURE__*/React.createElement(SupplierTagPicker,{tags:getFreightTags(entry),options:supplierOptions,disabled:locked,problem:!!(tagStatus&&!tagStatus.allocated&&tagStatus.costSC>0),onChange:next=>{onUpd('supplierTags',next);onUpd('supplierTag',next.length===1?next[0]:'');}}),/*#__PURE__*/React.createElement("div",{className:"flex items-center gap-1",style:{width:80},title:`Estimated freight transit time \u2014 enter value in ${leadTimeUnit}`},/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{width:52},value:leadTimeUnit==='weeks'?+((entry.leadTimeDays||0)/7).toFixed(2):leadTimeUnit==='months'?+((entry.leadTimeDays||0)/30.44).toFixed(2):(entry.leadTimeDays||0),onChange:v=>{var days=leadTimeUnit==='weeks'?v*7:leadTimeUnit==='months'?v*30.44:v;onUpd("leadTimeDays",Math.max(0,Math.round(days)));},min:0}),/*#__PURE__*/React.createElement("button",{onClick:()=>setLeadTimeUnit&&setLeadTimeUnit(u=>u==='days'?'weeks':u==='weeks'?'months':'days'),title:"Click to cycle Days \u2192 Weeks \u2192 Months",style:{fontSize:10,color:"#94a3b8",flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0,fontWeight:600}},leadTimeUnit==='weeks'?'w':leadTimeUnit==='months'?'m':'d')),/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right",style:{width:96,color:"#475569"}},fc(costSC)," ",sellCcy,(()=>{var tg=getFreightTags(entry);if(!tg.length)return null;var lost=!!(tagStatus&&!tagStatus.allocated&&tagStatus.costSC>0);var ttl=lost?'Not allocated \u2014 no eligible items from the tagged supplier(s), so this cost is missing from landed cost':(tagStatus&&tagStatus.problems.length?'No eligible items for: '+tagStatus.problems.map(p=>p.tag).join(', '):tg.join(', '));return/*#__PURE__*/React.createElement("div",{title:ttl,style:{fontSize:9,color:lost?'#d97706':'#3b82f6',fontWeight:lost?700:400,marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:96}},(lost?'\u26A0 ':'')+tg.join(', '));})()),hasMargin&&/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right font-semibold",style:{width:96,color:"#166534"}},fc(sellSC)," ",sellCcy),hasMargin&&/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right",style:{width:80,color:marginValue>=0?"#16a34a":"#dc2626"}},fc(marginValue)," ",sellCcy),/*#__PURE__*/React.createElement("button",{onClick:onQuotes,title:(entry.freightQuotes||[]).length>0?`${(entry.freightQuotes||[]).length} freight quote${(entry.freightQuotes||[]).length!==1?'s':''} — click to manage`:'Add freight quotes (e.g. Sea vs Air comparison)',style:{flexShrink:0,fontSize:11,padding:'1px 6px',borderRadius:4,cursor:'pointer',border:'1px solid',borderColor:(entry.freightQuotes||[]).length>0?'#86efac':'#e2e8f0',background:(entry.freightQuotes||[]).length>0?'#f0fdf4':'#fff',color:(entry.freightQuotes||[]).length>0?'#166534':'#94a3b8'}},"\u2696",(entry.freightQuotes||[]).length>0?` ${(entry.freightQuotes||[]).length}`:''),/*#__PURE__*/React.createElement("button",{onClick:onRm,className:"text-gray-300 hover:text-red-500 text-sm transition-colors",style:{width:20,textAlign:'center',flexShrink:0}},"\u2715"));};var FrtHeader=({hasMargin,showAFRMM,isCIT,sellCcy,valueLabel})=>/*#__PURE__*/React.createElement("div",{className:"flex gap-2 mb-1 px-2 text-xs font-semibold",style:{color:"#94a3b8"}},/*#__PURE__*/React.createElement("span",{style:{flex:'1 1 0'}},"Description"),/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right'}},"Cost"),/*#__PURE__*/React.createElement("span",{style:{width:72}},"Ccy"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:108,textAlign:'left'}},"Margin % (GM/MK)"),showAFRMM&&isCIT&&/*#__PURE__*/React.createElement("span",{style:{width:64}},"AFRMM"),showAFRMM&&/*#__PURE__*/React.createElement("span",{style:{width:120,color:"#94a3b8",fontSize:10}},"Supplier (optional)"),/*#__PURE__*/React.createElement("span",{style:{width:80,textAlign:'right'}},"Transit (d)"),/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right'}},"Cost (",sellCcy,")"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right',color:"#166534"}},"Sell Price"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:80,textAlign:'right',color:"#16a34a"}},valueLabel||"Margin Value"),/*#__PURE__*/React.createElement("span",{style:{width:28}}));function usePricingEngine({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating}){// Thin wrapper: the calculation lives in engine/pricing.js (computePricing), shared with the project-costing fork.
+var FrtRow=({entry,onUpd,onRm,onQuotes,hasMargin,sellCcy,rates,isCIT,showAFRMM,supplierOptions=[],leadTimeUnit='days',setLeadTimeUnit,tagStatus,locked})=>{var costSC=conv(entry.cost||0,entry.ccy||"USD",sellCcy,rates);var margin=entry.margin||0;var isMarkup=entry.marginMode==='markup';var sellSC=hasMargin?(isMarkup?costSC*(1+margin/100):margin<100?costSC/(1-margin/100):costSC):costSC;var marginValue=sellSC-costSC;return/*#__PURE__*/React.createElement("div",{className:"flex items-center gap-2 p-2 rounded-lg border mb-2",style:{background:"#f8fafc",borderColor:"#e2e8f0"}},/*#__PURE__*/React.createElement("input",{className:"pcw-input min-w-0",style:{flex:'1 1 0'},value:entry.desc||"",onChange:e=>onUpd("desc",e.target.value),placeholder:"Description (e.g. Sea freight, Air freight)"}),/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{width:96},value:entry.cost||0,onChange:v=>onUpd("cost",v)}),/*#__PURE__*/React.createElement("select",{className:"pcw-input",style:{width:72},value:entry.ccy||"USD",onChange:e=>onUpd("ccy",e.target.value)},CURRENCIES.map(c=>/*#__PURE__*/React.createElement("option",{key:c},c))),hasMargin?/*#__PURE__*/React.createElement("div",{style:{display:'flex',alignItems:'center',gap:3,width:108,flexShrink:0}},/*#__PURE__*/React.createElement("button",{onClick:()=>onUpd('marginMode',entry.marginMode==='markup'?'margin':'markup'),title:entry.marginMode==='markup'?'Currently Markup % on cost — click to switch to Gross Margin %':'Currently Gross Margin % of sell price — click to switch to Markup %',style:{fontSize:9,padding:'1px 5px',borderRadius:3,border:'1px solid #475569',background:entry.marginMode==='markup'?'#1e3a5f':'#1e293b',color:entry.marginMode==='markup'?'#60a5fa':'#94a3b8',cursor:'pointer',flexShrink:0,lineHeight:1.6,whiteSpace:'nowrap'}},entry.marginMode==='markup'?'MK%':'GM%'),/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{flex:1,minWidth:0},value:entry.margin||0,onChange:v=>onUpd("margin",v),placeholder:"0",title:entry.marginMode==='markup'?'Markup % on cost':'Gross Margin % of sell price'})):null,showAFRMM&&isCIT&&/*#__PURE__*/React.createElement("label",{className:"flex items-center gap-1 text-xs cursor-pointer",style:{color:"#475569",width:64}},/*#__PURE__*/React.createElement("input",{type:"checkbox",checked:entry.afrmm||false,onChange:e=>onUpd("afrmm",e.target.checked),className:"cursor-pointer"}),/*#__PURE__*/React.createElement("span",{title:"Additional Freight for Renewal of Merchant Marine - Maritime surcharge"},"AFRMM?")),showAFRMM&&/*#__PURE__*/React.createElement(SupplierTagPicker,{tags:getFreightTags(entry),options:supplierOptions,disabled:locked,problem:!!(tagStatus&&!tagStatus.allocated&&tagStatus.costSC>0),onChange:next=>{onUpd('supplierTags',next);onUpd('supplierTag',next.length===1?next[0]:'');}}),/*#__PURE__*/React.createElement("div",{className:"flex items-center gap-1",style:{width:80},title:`Estimated freight transit time \u2014 enter value in ${leadTimeUnit}`},/*#__PURE__*/React.createElement(NumInput,{className:"pcw-input pcw-mono text-right",style:{width:52},value:leadTimeUnit==='weeks'?+((entry.leadTimeDays||0)/7).toFixed(2):leadTimeUnit==='months'?+((entry.leadTimeDays||0)/30.44).toFixed(2):(entry.leadTimeDays||0),onChange:v=>{var days=leadTimeUnit==='weeks'?v*7:leadTimeUnit==='months'?v*30.44:v;onUpd("leadTimeDays",Math.max(0,Math.round(days)));},min:0}),/*#__PURE__*/React.createElement("button",{onClick:()=>setLeadTimeUnit&&setLeadTimeUnit(u=>u==='days'?'weeks':u==='weeks'?'months':'days'),title:"Click to cycle Days \u2192 Weeks \u2192 Months",style:{fontSize:10,color:"#94a3b8",flexShrink:0,background:'none',border:'none',cursor:'pointer',padding:0,fontWeight:600}},leadTimeUnit==='weeks'?'w':leadTimeUnit==='months'?'m':'d')),/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right",style:{width:96,color:"#475569"}},fc(costSC)," ",sellCcy,(()=>{var tg=getFreightTags(entry);if(!tg.length)return null;var lost=!!(tagStatus&&!tagStatus.allocated&&tagStatus.costSC>0);var ttl=lost?'Not allocated \u2014 no eligible items from the tagged supplier(s), so this cost is missing from landed cost':(tagStatus&&tagStatus.problems.length?'No eligible items for: '+tagStatus.problems.map(p=>p.tag).join(', '):tg.join(', '));return/*#__PURE__*/React.createElement("div",{title:ttl,style:{fontSize:9,color:lost?'#d97706':'#3b82f6',fontWeight:lost?700:400,marginTop:1,whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis',maxWidth:96}},(lost?'\u26A0 ':'')+tg.join(', '));})()),hasMargin&&/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right font-semibold",style:{width:96,color:"#166534"}},fc(sellSC)," ",sellCcy),hasMargin&&/*#__PURE__*/React.createElement("div",{className:"text-xs pcw-mono text-right",style:{width:80,color:marginValue>=0?"#16a34a":"#dc2626"}},fc(marginValue)," ",sellCcy),/*#__PURE__*/React.createElement("button",{onClick:onQuotes,title:(entry.freightQuotes||[]).length>0?`${(entry.freightQuotes||[]).length} freight quote${(entry.freightQuotes||[]).length!==1?'s':''} — click to manage`:'Add freight quotes (e.g. Sea vs Air comparison)',style:{flexShrink:0,fontSize:11,padding:'1px 6px',borderRadius:4,cursor:'pointer',border:'1px solid',borderColor:(entry.freightQuotes||[]).length>0?'#86efac':'#e2e8f0',background:(entry.freightQuotes||[]).length>0?'#f0fdf4':'#fff',color:(entry.freightQuotes||[]).length>0?'#166534':'#94a3b8'}},"\u2696",(entry.freightQuotes||[]).length>0?` ${(entry.freightQuotes||[]).length}`:''),/*#__PURE__*/React.createElement("button",{onClick:onRm,className:"text-gray-300 hover:text-red-500 text-sm transition-colors",style:{width:20,textAlign:'center',flexShrink:0}},"\u2715"));};var FrtHeader=({hasMargin,showAFRMM,isCIT,sellCcy,valueLabel})=>/*#__PURE__*/React.createElement("div",{className:"flex gap-2 mb-1 px-2 text-xs font-semibold",style:{color:"#94a3b8"}},/*#__PURE__*/React.createElement("span",{style:{flex:'1 1 0'}},"Description"),/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right'}},"Cost"),/*#__PURE__*/React.createElement("span",{style:{width:72}},"Ccy"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:108,textAlign:'left'}},"Margin % (GM/MK)"),showAFRMM&&isCIT&&/*#__PURE__*/React.createElement("span",{style:{width:64}},"AFRMM"),showAFRMM&&/*#__PURE__*/React.createElement("span",{style:{width:120,color:"#94a3b8",fontSize:10}},"Supplier (optional)"),/*#__PURE__*/React.createElement("span",{style:{width:80,textAlign:'right'}},"Transit (d)"),/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right'}},"Cost (",sellCcy,")"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:96,textAlign:'right',color:"#166534"}},"Sell Price"),hasMargin&&/*#__PURE__*/React.createElement("span",{style:{width:80,textAlign:'right',color:"#16a34a"}},valueLabel||"Margin Value"),/*#__PURE__*/React.createElement("span",{style:{width:28}}));function usePricingEngine({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,sheets}){// Thin wrapper: the calculation lives in engine/pricing.js (computePricing), shared with the project-costing fork.
 // Dependencies list every input computePricing reads, including each proj field, so unrelated project edits (name, notes) do not recalculate.
-return useMemo(()=>computePricing({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating}),[tree,items,frt,proj.sellCcy,proj.rates,proj.siscomexOverride,proj.afrmmRate,proj.customsCharges,proj.defaultDealer,proj.discountMitigation,proj.bu,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating]);}function useCurrencyEngine({items,proj,grand,sched}){var ccyBreakdown=useMemo(()=>{var map={};items.filter(i=>i.type!=="heading").forEach(i=>{var ccy=i.ccy||"USD";var value=(parseFloat(i.unitCost)||0)*(parseFloat(i.qty)||1);if(!map[ccy])map[ccy]={value:0,valueSC:0,count:0};map[ccy].value+=value;map[ccy].valueSC+=conv(value,ccy,proj.sellCcy,proj.rates);map[ccy].count++;});return map;},[items,proj.sellCcy,proj.rates]);var{srcGroups,totalW}=useMemo(()=>{var groups={};items.filter(i=>i.type!=="heading").forEach(i=>{var w=conv(parseFloat(i.unitCost)||0,i.ccy||"USD",proj.sellCcy,proj.rates)*(parseFloat(i.qty)||1);if(!groups[i.source])groups[i.source]={count:0,w:0};groups[i.source].count++;groups[i.source].w+=w;});var tw=Object.values(groups).reduce((s,g)=>s+g.w,0);return{srcGroups:groups,totalW:tw};},[items,proj.sellCcy,proj.rates]);var grandUSD=useMemo(()=>conv(grand,proj.sellCcy,"USD",proj.rates),[grand,proj.sellCcy,proj.rates]);var needsSalesforce=grandUSD>=SF_QUOTE_THRESHOLD;var sfObject=useMemo(()=>parseSalesforceLink(sched?.salesforceLink||''),[sched?.salesforceLink]);return{ccyBreakdown,srcGroups,totalW,grandUSD,needsSalesforce,sfObject};}function useSalesTaxEngine({tree,proj,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight,items}){// Thin wrapper over computeSalesTax (engine/pricing.js). `pricing` is the usePricingEngine result.
+return useMemo(()=>computePricing({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,sheets}),[tree,items,frt,proj.sellCcy,proj.rates,proj.siscomexOverride,proj.afrmmRate,proj.customsCharges,proj.defaultDealer,proj.discountMitigation,proj.bu,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,sheets]);}
+// GCS commercial summary (per-tab provisions, Excel P&L, rounding, discount, targets). engine/gcs.js computeGcsSummary.
+function useGcsSummary({tree,sheets,proj,pricing}){return useMemo(()=>computeGcsSummary({tree,sheets,proj,pricing}),[tree,sheets,proj,pricing]);}function useCurrencyEngine({items,proj,grand,sched}){var ccyBreakdown=useMemo(()=>{var map={};items.filter(i=>i.type!=="heading").forEach(i=>{var ccy=i.ccy||"USD";var value=(parseFloat(i.unitCost)||0)*(parseFloat(i.qty)||1);if(!map[ccy])map[ccy]={value:0,valueSC:0,count:0};map[ccy].value+=value;map[ccy].valueSC+=conv(value,ccy,proj.sellCcy,proj.rates);map[ccy].count++;});return map;},[items,proj.sellCcy,proj.rates]);var{srcGroups,totalW}=useMemo(()=>{var groups={};items.filter(i=>i.type!=="heading").forEach(i=>{var w=conv(parseFloat(i.unitCost)||0,i.ccy||"USD",proj.sellCcy,proj.rates)*(parseFloat(i.qty)||1);if(!groups[i.source])groups[i.source]={count:0,w:0};groups[i.source].count++;groups[i.source].w+=w;});var tw=Object.values(groups).reduce((s,g)=>s+g.w,0);return{srcGroups:groups,totalW:tw};},[items,proj.sellCcy,proj.rates]);var grandUSD=useMemo(()=>conv(grand,proj.sellCcy,"USD",proj.rates),[grand,proj.sellCcy,proj.rates]);var needsSalesforce=grandUSD>=SF_QUOTE_THRESHOLD;var sfObject=useMemo(()=>parseSalesforceLink(sched?.salesforceLink||''),[sched?.salesforceLink]);return{ccyBreakdown,srcGroups,totalW,grandUSD,needsSalesforce,sfObject};}function useSalesTaxEngine({tree,proj,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight,items}){// Thin wrapper over computeSalesTax (engine/pricing.js). `pricing` is the usePricingEngine result.
 return useMemo(()=>computeSalesTax({tree,items,proj,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight}),[tree,items,proj.salesType,proj.sellCcy,proj.rates,proj.customsCharges,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight]);}function SaveDropdown({manualSave,exportPackage,exportPDF,saveStatus,downloadJSON,t}){var[saveOpen,setSaveOpen]=React.useState(false);return/*#__PURE__*/React.createElement("div",{style:{display:'inline-block',position:'relative'}},/*#__PURE__*/React.createElement("button",{className:"text-xs px-2 py-0.5 rounded border border-slate-600 text-slate-400 hover:border-blue-400 hover:text-blue-300 transition-colors",onClick:()=>setSaveOpen(o=>!o),title:"Save options"},"\uD83D\uDCBE \u25BE"),saveOpen&&/*#__PURE__*/React.createElement("div",{style:{position:'absolute',right:0,top:'110%',background:'#1e293b',border:'1px solid #334155',borderRadius:6,minWidth:185,zIndex:999,boxShadow:'0 4px 16px rgba(0,0,0,.4)'}},/*#__PURE__*/React.createElement("button",{style:{display:'block',width:'100%',textAlign:'left',padding:'7px 12px',fontSize:12,color:'#e2e8f0',background:'none',border:'none',cursor:'pointer',borderBottom:'1px solid #334155'},onMouseEnter:e=>e.currentTarget.style.background='#334155',onMouseLeave:e=>e.currentTarget.style.background='none',onClick:()=>{exportPDF();setSaveOpen(false);}},t('exportPDF')),/*#__PURE__*/React.createElement("button",{style:{display:'block',width:'100%',textAlign:'left',padding:'7px 12px',fontSize:12,color:'#e2e8f0',background:'none',border:'none',cursor:'pointer',borderBottom:'1px solid #334155'},onMouseEnter:e=>e.currentTarget.style.background='#334155',onMouseLeave:e=>e.currentTarget.style.background='none',onClick:()=>{downloadJSON();setSaveOpen(false);}},t('saveJSON')),/*#__PURE__*/React.createElement("button",{style:{display:'block',width:'100%',textAlign:'left',padding:'7px 12px',fontSize:12,color:'#e2e8f0',background:'none',border:'none',cursor:'pointer'},onMouseEnter:e=>e.currentTarget.style.background='#334155',onMouseLeave:e=>e.currentTarget.style.background='none',onClick:()=>{exportPackage();setSaveOpen(false);}},t('savePackage')," (.zip)")));}class TabErrorBoundary extends React.Component{constructor(props){super(props);this.state={error:null};}static getDerivedStateFromError(error){return{error};}componentDidCatch(error,info){console.error('[GCS] Tab error:',error,info);}render(){if(this.state.error){return/*#__PURE__*/React.createElement("div",{style:{margin:'2rem auto',maxWidth:560,padding:'2rem',background:'#fef2f2',border:'1px solid #fecaca',borderRadius:12,textAlign:'center'}},/*#__PURE__*/React.createElement("div",{style:{fontSize:32,marginBottom:12}},"\u26A0\uFE0F"),/*#__PURE__*/React.createElement("div",{style:{fontWeight:600,fontSize:15,color:'#991b1b',marginBottom:8}},"Something went wrong in this tab"),/*#__PURE__*/React.createElement("div",{style:{fontSize:13,color:'#7f1d1d',marginBottom:16,lineHeight:1.6}},this.state.error.message),/*#__PURE__*/React.createElement("div",{style:{fontSize:12,color:'#b91c1c',marginBottom:20}},"Your data is safe. Try switching to another tab and back, or reload the page."),/*#__PURE__*/React.createElement("button",{onClick:()=>this.setState({error:null}),style:{background:'#dc2626',color:'#fff',border:'none',borderRadius:6,padding:'8px 20px',fontSize:13,fontWeight:600,cursor:'pointer'}},"Try again"));}return this.props.children;}}var ExcelOptionsDropdown=({setShowTemplate,exportExcel,setItems,proj})=>{var[open,setOpen]=useState(false);var ref=useRef(null);useEffect(()=>{if(!open)return;var h=e=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false);};document.addEventListener('mousedown',h);return()=>document.removeEventListener('mousedown',h);},[open]);var loadCSV=()=>{setOpen(false);var parseCSV=raw=>{var rows=[];var cur=[],field="",inQ=false;for(var i=0;i<raw.length;i++){var ch=raw[i],nx=raw[i+1];if(inQ){if(ch==='"'&&nx==='"'){field+='"';i++;}else if(ch==='"'){inQ=false;}else{field+=ch;}}else if(ch==='"'){inQ=true;}else if(ch===','){cur.push(field.trim());field="";}else if(ch==='\r'||ch==='\n'){if(ch==='\r'&&nx==='\n')i++;cur.push(field.trim());field="";if(cur.some(c=>c!==""))rows.push(cur);cur=[];}else{field+=ch;}}cur.push(field.trim());if(cur.some(c=>c!==""))rows.push(cur);return rows;};var VALID_CCY=new Set(["USD","GBP","EUR","ARS","BRL"]);var VALID_SRC=new Set(["Quotation","Estimate","Pricelist","Budget","Assumption","Actuals"]);var inp=document.createElement("input");inp.type="file";inp.accept=".csv,.txt";inp.onchange=e=>{var r=new FileReader();r.onload=ev=>{try{var rows=parseCSV(ev.target.result);if(rows.length<2){alert("CSV appears empty or has no data rows.");return;}var newItems=rows.slice(1).filter(c=>c.length>=2&&(c[0]||c[1])).map(c=>{var rawCcy=(c[6]||"USD").toUpperCase();var rawSrc=c[7]||"";return{id:uid(),type:"item",parentId:null,partNumber:c[0]||"",description:c[1]||"",drawingNumber:c[2]||"",supplier:c[3]||"",qty:Math.max(0.001,parseFloat(c[4])||1),unitCost:Math.max(0,parseFloat(c[5])||0),ccy:VALID_CCY.has(rawCcy)?rawCcy:"USD",source:VALID_SRC.has(rawSrc)?rawSrc:"Estimate",margin:proj.defaultMargin||0,contingency:proj.defaultContingency||0,tariff:0,discount:0,notes:c[8]||""};});setItems(p=>[...p,...newItems]);alert(`✓ Imported ${newItems.length} item${newItems.length!==1?"s":""}. Margins/tariff defaulted to current header values — adjust per item as needed.`);}catch(err){alert("Import failed: "+err.message);}};r.readAsText(e.target.files[0]);};inp.click();};var items=[...(!proj.locked?[{icon:'📂',label:'Load CSV',action:loadCSV}]:[]),{icon:'📋',label:'Get Template',action:()=>{setOpen(false);setShowTemplate(true);}},{icon:'📊',label:'Export Excel',action:()=>{setOpen(false);exportExcel();}}];return/*#__PURE__*/React.createElement("div",{ref:ref,style:{position:'relative'}},/*#__PURE__*/React.createElement("button",{className:"pcw-btn-primary",style:{background:'#16a34a',display:'flex',alignItems:'center',gap:6},onClick:()=>setOpen(o=>!o)},"\uD83D\uDCCA Excel Options ",/*#__PURE__*/React.createElement("span",{style:{fontSize:10,opacity:.8}},open?'▲':'▼')),open&&/*#__PURE__*/React.createElement("div",{style:{position:'absolute',top:'calc(100% + 4px)',left:0,background:'#fff',border:'1px solid #e2e8f0',borderRadius:8,boxShadow:'0 8px 24px rgba(0,0,0,.12)',zIndex:200,minWidth:180,overflow:'hidden'}},items.map(({icon,label,action})=>/*#__PURE__*/React.createElement("button",{key:label,onClick:action,style:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'9px 14px',background:'none',border:'none',borderBottom:'1px solid #f1f5f9',cursor:'pointer',fontSize:13,color:'#1e293b',textAlign:'left'},onMouseEnter:e=>e.currentTarget.style.background='#f8fafc',onMouseLeave:e=>e.currentTarget.style.background='none'},/*#__PURE__*/React.createElement("span",{style:{fontSize:15,width:20,textAlign:'center'}},icon),label))));};
 var SummaryTab=({allocMap,autoConf,buildUpGrossMargin,ccyBreakdown,distributeOutboundFreight,ebitda,effGM,exportHTML,exportPDF,formatDate,fulfil,generateApprovalEml,grand,grandUSD,grandWithTax,isCIT,items,landedCOGS,marginByConfidence,marginBySupplier,pcCostSC,pcTotal,proj,qualityScoreMinimised,quoteQualityScore,sched,setQualityScoreMinimised,setShowCurrencyBreakdown,setShowMarginAnalysis,sfObject,showCurrencyBreakdown,showMarginAnalysis,srcGroups,t,topCOGS,totalDays,totalDiscount,totalOutCost,totalOutMargin,totalOutSP,totalSalesTax,totalW,tree,costingSheets,getItemNetPrice})=>{return/*#__PURE__*/React.createElement("div",{className:"space-y-4"},/*#__PURE__*/React.createElement("div",{className:"pcw-hero"},/*#__PURE__*/React.createElement("div",null,/*#__PURE__*/React.createElement("div",{className:"pcw-hero-meta"},proj.bu," \xB7 Rev ",proj.rev),/*#__PURE__*/React.createElement("h2",{className:"pcw-hero-title"},proj.name||"Untitled Project"),/*#__PURE__*/React.createElement("div",{className:"pcw-hero-sub"},proj.ref||"—"," \xB7 ",proj.customer.name||"No Customer",proj.customer.country?" · "+proj.customer.country:""),/*#__PURE__*/React.createElement("div",{className:"flex flex-wrap gap-2 mt-3"},/*#__PURE__*/React.createElement("span",{className:"pcw-pill"},"Incoterm: ",proj.incoterm||"EXW"),/*#__PURE__*/React.createElement("span",{className:"pcw-pill"},"Fulfilment: ",fulfil),/*#__PURE__*/React.createElement("span",{className:"pcw-pill"},totalDays,"d lead time"),/*#__PURE__*/React.createElement("span",{className:"pcw-pill"},items.filter(i=>i.type!=="heading").length," items"),isCIT&&/*#__PURE__*/React.createElement("span",{className:"pcw-pill",style:{background:"rgba(220,38,38,.3)"}},"\uD83C\uDDE7\uD83C\uDDF7 BR Tax"),/*#__PURE__*/React.createElement("span",{className:"pcw-pill font-semibold",style:{background:CONF_COLOR[autoConf]+"bb"}},CONF_LABEL[autoConf]," Cost Confidence"))),/*#__PURE__*/React.createElement("div",{className:"text-right flex-shrink-0 ml-4"},isCIT?/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",{className:"pcw-hero-meta"},"Sell Price"),/*#__PURE__*/React.createElement("div",{className:"pcw-hero-total",style:{fontSize:28}},fc(grand)),/*#__PURE__*/React.createElement("div",{className:"text-sm mt-1",style:{color:"#94a3b8"}},proj.sellCcy," (excl. sales taxes)"),/*#__PURE__*/React.createElement("div",{className:"mt-3",style:{borderTop:"1px solid rgba(255,255,255,0.2)",paddingTop:12}},/*#__PURE__*/React.createElement("div",{className:"pcw-hero-meta"},"With Sales Taxes"),/*#__PURE__*/React.createElement("div",{className:"pcw-hero-total",style:{fontSize:28,color:"#a78bfa"}},fc(grandWithTax)),/*#__PURE__*/React.createElement("div",{className:"text-sm mt-1",style:{color:"#c4b5fd"}},proj.sellCcy," (customer pays)"))):/*#__PURE__*/React.createElement(React.Fragment,null,/*#__PURE__*/React.createElement("div",{className:"pcw-hero-meta"},"Sell Price"),/*#__PURE__*/React.createElement("div",{className:"pcw-hero-total"},fc(grand)),/*#__PURE__*/React.createElement("div",{className:"text-sm mt-1",style:{color:"#94a3b8"}},proj.sellCcy)))),(()=>{var sfVal=grandUSD;var sfParsed=sfObject;var hasLink=!!(sched.salesforceLink&&sched.salesforceLink.trim());// Case linked but above threshold — error level
 if(hasLink&&sfParsed.type==='Case'&&sfVal>=SF_QUOTE_THRESHOLD){return/*#__PURE__*/React.createElement("div",{className:"pcw-info-box",style:{background:"#fef2f2",borderColor:"#fecaca",color:"#991b1b"}},/*#__PURE__*/React.createElement("strong",null,"\uD83D\uDD34 Salesforce Object Mismatch")," \u2014 Quote value (",fc(sfVal)," USD equivalent) meets or exceeds the $",SF_QUOTE_THRESHOLD.toLocaleString()," USD threshold but is linked to a ",/*#__PURE__*/React.createElement("strong",null,"Case"),". This should be linked to a Salesforce ",/*#__PURE__*/React.createElement("strong",null,"Opportunity"),".");}// No link and above threshold — prompt to create opportunity
@@ -2692,7 +2961,7 @@ if(window.__pcwLaunchFile){console.log('[GCS] Consuming pre-mounted launch file:
 if(window.__pcwSharedFile){console.log('[GCS] Consuming shared file:',window.__pcwSharedFile.name);handleLaunchFile(window.__pcwSharedFile);window.__pcwSharedFile=null;}return()=>{window.__pcwLaunchCallback=null;};})();},[]);var buildPersistentState=useCallback((projOverride)=>({
 project:projOverride||proj,items,freight:frt,schedule:sched,brazilTaxes,brazilStates,
 forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,
-language,dateFormat,rowColors,costingSheets,activeSheetId
+language,dateFormat,rowColors,costingSheets,activeSheetId,gcsFormat:GCS_FORMAT
 }),[proj,items,frt,sched,brazilTaxes,brazilStates,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,language,dateFormat,rowColors,costingSheets,activeSheetId]);
 // Single entry point for applying loaded/restored state — accepts either key convention
 // (project/freight/schedule OR legacy proj/frt/sched) so every restore path (mount-time
@@ -2737,13 +3006,13 @@ var h=el.offsetHeight;if(h>4)setRowHeights(prev=>{var newRow=Math.round(h);if(ne
 useEffect(()=>{// Small delay to let the browser complete layout before measuring
 var t=setTimeout(measureRowHeight,50);return()=>clearTimeout(t);},[tab,isVirtual,measureRowHeight]);// ── End virtualisation setup ──────────────────────────────────────────────
 var partNumberFingerprint=useMemo(()=>items.map(i=>i.type!=='heading'?i.id+':'+(i.partNumber||''):'').join('|'),[items]);var duplicates=useMemo(()=>{var partCounts={};var dupes=new Set();items.filter(i=>i.type!=="heading"&&i.partNumber?.trim()).forEach(item=>{var pn=item.partNumber.trim().toUpperCase();if(!partCounts[pn]){partCounts[pn]=[];}partCounts[pn].push(item.id);});Object.entries(partCounts).forEach(([pn,ids])=>{if(ids.length>1){ids.forEach(id=>dupes.add(id));}});return{duplicateIds:dupes,duplicatePartNumbers:Object.entries(partCounts).filter(([pn,ids])=>ids.length>1).map(([pn,ids])=>({partNumber:pn,count:ids.length}))};},[partNumberFingerprint]);// eslint-disable-line react-hooks/exhaustive-deps
-var topCOGS=useMemo(()=>tree.reduce((s,n)=>s+n.totalCOGS,0),[tree]);var pricing=usePricingEngine({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating});var{totalInbFrt,freightTagStatus,siscomex,afrmm,outEntries,totalOutSP,totalOutCost,totalOutMargin,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemNetPrice,getItemSPWithSalesTax,calculateReverseMargin,landedCOGS,itemsSP,grand,itemsSPWithTax,totalOutSPWithTax,grandWithTax,freightTaxSC,outboundFreightAllocations,packingCratingAllocations,pcActive,pcTotal,pcBaseSPs}=pricing;// P&C cost — only in cost+margin mode; pct/fixed modes treated as pure profit
+var topCOGS=useMemo(()=>tree.reduce((s,n)=>s+n.totalCOGS,0),[tree]);var pricing=usePricingEngine({tree,items,frt,proj,brazilTaxes,brazilStates,isCIT,forceAllocToPricelist,forceAllocToZeroCost,distributeOutboundFreight,distributePackingCrating,sheets:costingSheets});var{totalInbFrt,freightTagStatus,siscomex,afrmm,outEntries,totalOutSP,totalOutCost,totalOutMargin,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemNetPrice,getItemSPWithSalesTax,calculateReverseMargin,landedCOGS,itemsSP,grand,itemsSPWithTax,totalOutSPWithTax,grandWithTax,freightTaxSC,outboundFreightAllocations,packingCratingAllocations,pcActive,pcTotal,pcBaseSPs}=pricing;// P&C cost — only in cost+margin mode; pct/fixed modes treated as pure profit
 var pcCostSC=(pcActive&&(frt.packingCrating?.mode||'pct')==='cost')?conv(parseFloat(frt.packingCrating?.cost)||0,frt.packingCrating?.costCcy||'USD',proj.sellCcy,proj.rates):0;
 // effectiveCOGS includes outbound freight cost and P&C cost (when not distributed)
 var effectiveCOGS=landedCOGS+(distributeOutboundFreight?0:totalOutCost)+(distributePackingCrating?0:pcCostSC);
 // Recalculate effGM/gmValue/ebitda using correct cost base
 var effGM=grand>0?(1-effectiveCOGS/grand)*100:0;var gmValue=grand-effectiveCOGS;var ebitda=effGM-(proj.sAndAExpense||0);var ebitdaValue=grand*ebitda/100;
-var{ccyBreakdown,srcGroups,totalW,grandUSD,needsSalesforce,sfObject}=useCurrencyEngine({items,proj,grand,sched});var{totalImportTax,totalSalesTax,totalTax,salesTaxTotals,totalDiscount,buildUpGrossMargin,getBT:getTaxConfig,getItemSalesTax,getItemImportTaxDetail,marginByConfidence,marginBySupplier}=useSalesTaxEngine({tree,proj,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight,items});// Sorted item list — headings stay in place, only root items are reordered.
+var{ccyBreakdown,srcGroups,totalW,grandUSD,needsSalesforce,sfObject}=useCurrencyEngine({items,proj,grand,sched});var{totalImportTax,totalSalesTax,totalTax,salesTaxTotals,totalDiscount,buildUpGrossMargin,getBT:getTaxConfig,getItemSalesTax,getItemImportTaxDetail,marginByConfidence,marginBySupplier}=useSalesTaxEngine({tree,proj,brazilTaxes,brazilStates,isCIT,pricing,distributeOutboundFreight,items});var gcsSummary=useGcsSummary({tree,sheets:costingSheets,proj,pricing});// Sorted item list — headings stay in place, only root items are reordered.
 // Children always follow their parent regardless of sort.
 // Declared here (after usePricingEngine) so spMap/netPriceMap/spTaxMap are in scope.
 // virtualSlots (declared later) depends on this via the flattenedSlots builder.
@@ -3311,7 +3580,7 @@ var zipBlob=await zip.generateAsync({type:'blob',compression:'DEFLATE',compressi
 setHasUnsavedChanges(false);hasUnsavedChangesRef.current=false;setLastSavedAt(new Date());setProj(packagedProject);},[proj,items,tree,getAlloc,getItemSP,getItemNetPrice,getItemSPWithSalesTax,topCOGS,landedCOGS,itemsSP,grand,grandWithTax,totalInbFrt,totalOutSP,siscomex,afrmm,effGM,gmValue,ebitda,ebitdaValue,exportExcel,buildPersistentState]);var onImportedChange=useCallback((itemId,isImported)=>{updItem(itemId,"imported",isImported);if(!isCIT)return;var stateICMS=calcICMSRate(brazilStates.origin,brazilStates.destination);var icms=proj.salesType==="Direct"&&isImported?4:stateICMS;setBrazilTaxes(prev=>{var existing=getBT(itemId);var patch={...existing,...(prev[itemId]||{}),icms};if(isImported){// Default IPI to 0% on import — most imported goods are NT (non-taxable) for
 // outbound IPI. User can override in the Brazil Tax tab if needed.
 patch.ipi=0;}// Note: when un-marking as imported we leave IPI as-is; user set it intentionally.
-return{...prev,[itemId]:patch};});},[updItem,isCIT,proj.salesType,brazilStates,getBT,setBrazilTaxes]);var ctxVal=useMemo(()=>({updItem,updItemText,updItemManual,updItemMerge,removeItem,addItem,insertItemAt,insertHeadingAt,fillDown,duplicateItem,reorderItem,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemSPWithSalesTax,getItemNetPrice,calculateReverseMargin,toggleNotes,sellCcy:proj.sellCcy,bu:proj.bu,rates:proj.rates,isCIT,locked:proj.locked,lookupPartNumber,showHistory,showCostHistory,onImportedChange,handleCellPaste,refreshAllAutofills,autofillRefreshing,estimationEligible,costAgeMap,setEstPopup,setQuotesPopup,setDraggedItem,setDropTarget,discountMitigation:proj.discountMitigation||0,defaultDealer:proj.defaultDealer||0,defaultContingency:proj.defaultContingency||0,duplicateIds:duplicates.duplicateIds,colVisibility,colOrder,setColOrder,setSelectedItems,setFocusedCell,itemsRef,t,outboundFreightAllocations,distributeOutboundFreight,distributePackingCrating,packingCratingAllocations,pcActive,searchQuery,treeById,leadTimeUnit,setLeadTimeUnit}),[updItem,updItemText,updItemManual,updItemMerge,removeItem,addItem,insertItemAt,insertHeadingAt,fillDown,duplicateItem,reorderItem,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemSPWithSalesTax,getItemNetPrice,calculateReverseMargin,toggleNotes,proj.sellCcy,proj.bu,proj.rates,isCIT,lookupPartNumber,showHistory,showCostHistory,onImportedChange,handleCellPaste,refreshAllAutofills,autofillRefreshing,estimationEligible,costAgeMap,setEstPopup,setQuotesPopup,proj.discountMitigation,proj.defaultDealer,proj.defaultContingency,duplicates.duplicateIds,colVisibility,colOrder,t,outboundFreightAllocations,distributeOutboundFreight,distributePackingCrating,packingCratingAllocations,pcActive,searchQuery,treeById,leadTimeUnit,setLeadTimeUnit]);// Volatile UI state — own context so hover/focus/drag/select only re-renders rows that read these
+return{...prev,[itemId]:patch};});},[updItem,isCIT,proj.salesType,brazilStates,getBT,setBrazilTaxes]);var ctxVal=useMemo(()=>({updItem,updItemText,updItemManual,updItemMerge,removeItem,addItem,insertItemAt,insertHeadingAt,fillDown,duplicateItem,reorderItem,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemSPWithSalesTax,getItemNetPrice,calculateReverseMargin,toggleNotes,sellCcy:proj.sellCcy,bu:proj.bu,rates:proj.rates,isCIT,locked:proj.locked,lookupPartNumber,showHistory,showCostHistory,onImportedChange,handleCellPaste,refreshAllAutofills,autofillRefreshing,estimationEligible,costAgeMap,setEstPopup,setQuotesPopup,setDraggedItem,setDropTarget,discountMitigation:proj.discountMitigation||0,defaultDealer:proj.defaultDealer||0,defaultContingency:proj.defaultContingency||0,duplicateIds:duplicates.duplicateIds,colVisibility,colOrder,setColOrder,setSelectedItems,setFocusedCell,itemsRef,t,outboundFreightAllocations,distributeOutboundFreight,distributePackingCrating,packingCratingAllocations,pcActive,searchQuery,treeById,leadTimeUnit,setLeadTimeUnit,marginOf:pricing.marginOf,gcsSheets:costingSheets,gcsProj:proj}),[updItem,updItemText,updItemManual,updItemMerge,removeItem,addItem,insertItemAt,insertHeadingAt,fillDown,duplicateItem,reorderItem,getAlloc,allocMap,spMap,netPriceMap,spTaxMap,quoteReadyMap,getItemSP,getItemSPWithSalesTax,getItemNetPrice,calculateReverseMargin,toggleNotes,proj.sellCcy,proj.bu,proj.rates,isCIT,lookupPartNumber,showHistory,showCostHistory,onImportedChange,handleCellPaste,refreshAllAutofills,autofillRefreshing,estimationEligible,costAgeMap,setEstPopup,setQuotesPopup,proj.discountMitigation,proj.defaultDealer,proj.defaultContingency,duplicates.duplicateIds,colVisibility,colOrder,t,outboundFreightAllocations,distributeOutboundFreight,distributePackingCrating,packingCratingAllocations,pcActive,searchQuery,treeById,leadTimeUnit,setLeadTimeUnit,pricing.marginOf,costingSheets,proj]);// Volatile UI state — own context so hover/focus/drag/select only re-renders rows that read these
 var uiCtxVal=useMemo(()=>({showNotes,draggedItem,dropTarget,selectedItems,focusedCell,itemErrorIds,itemWarnIds,itemFieldErrors,tableIntenseColors,rowColors,setRowColors,flashItemId,darkMode}),[showNotes,draggedItem,dropTarget,selectedItems,focusedCell,itemErrorIds,itemWarnIds,itemFieldErrors,tableIntenseColors,rowColors,setRowColors,flashItemId,darkMode]);var toggleColumn=key=>{setColVisibility(prev=>({...prev,[key]:!prev[key]}));};/* ── Approval History Card ─────────────────────────────────────────────── */var ProgressBar=({value,label,color,showPercentage=true})=>/*#__PURE__*/React.createElement("div",{className:"mb-2"},/*#__PURE__*/React.createElement("div",{className:"flex justify-between items-center mb-1"},/*#__PURE__*/React.createElement("span",{className:"text-xs font-medium",style:{color:"#64748b"}},label),showPercentage&&/*#__PURE__*/React.createElement("span",{className:"text-xs font-bold",style:{color}},Math.round(value),"%")),/*#__PURE__*/React.createElement("div",{className:"w-full h-2 rounded-full",style:{background:"#e2e8f0"}},/*#__PURE__*/React.createElement("div",{className:"h-2 rounded-full transition-all duration-300",style:{width:`${Math.min(value,100)}%`,background:color}})));var TABS=[{id:"setup",label:`⚙ ${t('setup')}`},{id:"costing",label:`📋 ${t('costing')}`},{id:"freight",label:`🚢 ${t('freight')}`},...(isCIT?[{id:"brazilImport",label:`🇧🇷 Import Taxes`,br:true},{id:"brazilSales",label:`💰 Sales Taxes`,br:true}]:[]),{id:"schedule",label:`📅 ${t('schedule')}`},{id:"summary",label:`📊 ${t('summary')}`}];useEffect(()=>{if((tab==="brazilImport"||tab==="brazilSales"||tab==="brazil")&&!isCIT)setTab("freight");},[isCIT,tab]);// Only auto-set sell currency when the user interactively changes BU.
 // Skip on initial mount and on JSON load (loadSettledRef guards both).
 // App Badge API — shows a dot on taskbar icon when there are unsaved changes

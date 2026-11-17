@@ -14,8 +14,11 @@
 // passes a copy of a node ({...n}) simply misses the cache and gets a fresh, identical result.
 
 const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isCIT,
-  forceAllocToPricelist, forceAllocToZeroCost, distributeOutboundFreight, distributePackingCrating }) => {
+  forceAllocToPricelist, forceAllocToZeroCost, distributeOutboundFreight, distributePackingCrating, sheets }) => {
   const toSC = (amt, ccy) => conv(amt, ccy, proj.sellCcy, proj.rates);
+  // GCS: margin comes from the line's markup level in its tab's markup table (or a Custom %); no contingency.
+  const sheetIdx = gcsSheetIndex(sheets);
+  const marginOf = n => gcsMarkupPct(n, sheetIdx.settingsOf(n));
 
   const topCOGS = tree.reduce((s, n) => s + n.totalCOGS, 0);
   const totalInbFrt = frt.inbound.reduce((s, e) => s + toSC(e.cost || 0, e.ccy || "USD"), 0);
@@ -198,7 +201,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
   const baseLineSP = item => {
     if (item.manualSellPrice !== null && item.manualSellPrice !== undefined) return item.manualSellPrice * (item.qty || 1);
     const a = getAlloc(item);
-    return applyMargins(a.landed, { margin: item.margin || 0, contingency: item.contingency || 0,
+    return applyMargins(a.landed, { margin: marginOf(item), contingency: 0,
       dealer: proj.defaultDealer || 0, discountMitigation: proj.discountMitigation || 0 });
   };
 
@@ -215,7 +218,8 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
 
   // ── Packing & Crating ──
   const pc = frt.packingCrating || {};
-  const pcActive = !!(pc.enabled && proj.bu !== "CIT");
+  // GCS: packing & crating removed; the per-tab FCA/Packing provision replaces it (computeGcsSummary).
+  const pcActive = false;
   // pcBaseSPs: item base sell prices (pre-outbound-freight, pre-discount) for the % calculation
   const pcBaseSPs = (() => {
     const map = {};
@@ -250,7 +254,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
       baseSP = n.manualSellPrice;
     } else {
       const a = getAlloc(n);
-      const totalSP = applyMargins(a.landed, { margin: n.margin || 0, contingency: n.contingency || 0,
+      const totalSP = applyMargins(a.landed, { margin: marginOf(n), contingency: 0,
         dealer: proj.defaultDealer || 0, discountMitigation: proj.discountMitigation || 0 });
       baseSP = totalSP / (n.qty || 1);
     }
@@ -304,7 +308,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
     const a = getAlloc(n);
     const landed = a.landed / (n.qty || 1);
     if (landed === 0) return 0;
-    const contingency = n.contingency || 0;
+    const contingency = 0; // GCS: no contingency (replaced by inflation and scaling factors)
     const dealer = proj.defaultDealer || 0;
     const discountMitig = proj.discountMitigation || 0;
     let backedOutSP = targetSellPrice;
@@ -332,9 +336,9 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
 
   return {
     topCOGS, totalInbFrt, freightTagStatus, siscomex, afrmm, outEntries, totalOutSP, totalOutCost, totalOutMargin,
-    getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
+    marginOf, getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
     calculateReverseMargin, landedCOGS, itemsSP, grand, itemsSPWithTax, totalOutSPWithTax, grandWithTax, freightTaxSC,
-    outboundFreightAllocations, packingCratingAllocations, pcActive, pcTotal, pcBaseSPs,
+    outboundFreightAllocations, packingCratingAllocations, pcActive, pcTotal, pcBaseSPs, distributeOutboundFreight,
   };
 };
 

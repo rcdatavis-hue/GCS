@@ -36,7 +36,8 @@ while (schemaVer < SCHEMA_VERSION) {
  schemaVer++;
 }
 // Re-normalise back to short keys after migration
-return { ...d, schemaVersion: SCHEMA_VERSION };
+// GCS: convert lines from before markup levels (defined in engine/gcs.js, loaded after this file)
+return gcsMigrateData({ ...d, schemaVersion: SCHEMA_VERSION });
 };
 
 const validateLoadedData = (data) => {

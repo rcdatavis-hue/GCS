@@ -174,18 +174,20 @@ return roots;
 const calcNode = (n, rates, sellCcy, opts={}) => {
 const cv = (a,c) => conv(a, c||"USD", sellCcy, rates);
 
+// GCS: a line's unit cost is scaled and inflated (Excel: cost_USD × scaling × (1 + inflation)).
+const costFactor = gcsCostFactor(n, opts.proj);
 if (!n._ch.length) {
- const unitC = cv(n.unitCost||0, n.ccy);
+ const unitC = cv(n.unitCost||0, n.ccy) * costFactor;
  const totalCOGS = unitC * (n.qty||1);
  const importedSubCount = 0;
  const afrmmSubCount = 0;
  // Leaf node: critical path = its own lead time (supplier delivery time)
  const criticalPathDays = n.leadTimeOverride ?? (n.leadTime||0);
- return { ...n, _ch: [], unitC, totalCOGS, importedSubCount, afrmmSubCount, criticalPathDays };
+ return { ...n, _ch: [], unitC, totalCOGS, importedSubCount, afrmmSubCount, criticalPathDays, costFactor };
 }
 
 const children = n._ch.map(c => calcNode(c, rates, sellCcy, opts));
-const ownC = cv(n.unitCost||0, n.ccy);
+const ownC = cv(n.unitCost||0, n.ccy) * costFactor;
 const childSum = children.reduce((s,c) => s + c.totalCOGS, 0);
 const totalCOGS = (childSum + ownC) * (n.qty||1);
 
@@ -210,6 +212,7 @@ return {
  importedSubCount,
  afrmmSubCount,
  criticalPathDays,
+ costFactor,
 };
 };
 
