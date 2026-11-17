@@ -322,9 +322,30 @@ tr[draggable="true"]:active{cursor:grabbing;}
 .pcw-th-resizable:hover .pcw-resize-handle::after{background:rgba(148,163,184,.7);}
 .pcw-input-invalid{border-color:#ef4444 !important;background:#fef2f2 !important;}
 .pcw-input-invalid:focus{box-shadow:0 0 0 2px rgba(239,68,68,.12) !important;}
-⚠️PCW Feed not connectedAutofills, pricing history, cost lookups and supplier search are unavailable.+ Connect Feed FileGo to Setup →GCSFixture<build>✓ Approve & LockCIW · Q-TEST Rev 0 · Test CoSell CCY: USDLanded: 944.101,490.25 USDCost Confidence:Very High⚠️ 7↺🌙📤 Upload🗑 Reset💾 ▾⌨️ Shortcuts
+⚠️PCW Feed not connectedAutofills, pricing history, cost lookups and supplier search are unavailable.+ Connect Feed FileGo to Setup →GCSFixture<build>✓ Approve & LockCIW · Q-TEST Rev 0 · Test CoSell CCY: USDLanded: 944.102,000.00 USDCost Confidence:Very High⚠️ 8↺🌙📤 Upload🗑 Reset💾 ▾⌨️ Shortcuts
 ===== TAB ⚙ Setup
 
+GCS Costing Method
+Bid location
+[Select office…]
+Segment
+[Select segment…]
+M&E % of sales
+[10.00]
+S&A % of sales
+[10.00]
+Project discount %
+[0.00]
+Round tab prices up to
+[1,000.00]
+Plant feed / capacity
+[0.00]
+Scaling exponent
+[0.60]
+Inflation % per month
+[0.50]
+Costing date
+[] today
 Project Information
 Project Name
 [Fixture]
@@ -380,16 +401,10 @@ Dealer/Agent % and Discount Mitigation % are set here and applied uniformly to a
 Discount Mitigation % (here) = Added to your margin calculation to build in buffer for expected discounts
 Discount % (per item in Costing) = Actual discount offered to customer, applied after sell price
 Example: With 5% mitigation built in, you can give a 5% discount and still hit your target margin!
-Default Margin %
-[0.00] %
-Default Contingency %
-[0.00] %
 Dealer / Agent %
 [5.00] %
 Discount Mitigation %
 [3.00] %
-S&A Expense %
-[10.00] %
 Default Source
 [— select —]
 💾 Save & Restore
@@ -430,7 +445,8 @@ No approvals recorded yet. Click Approve & Lock to create the first entry.
 ===== TAB 📋 Costing
 
 Sheet 1 ✏️
-+ Add Sheet
++ Add Tab
+▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 978.07 · Sales 1,524.22 USD · EBITDA 15.83% No segment
 Quote Readiness — 3 of 4 items complete 75 %
 ＋ Add Item + Add Section 📋 Copy for SAP B1 📥 Import Line Items from SAP Quote (.xlsx) ⚡ Quickest Lead 💰 Lowest Cost
 📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
@@ -446,10 +462,13 @@ Quote Readiness — 3 of 4 items complete 75 %
 | Supplier ⇅
 | Qty ⇅
 | Unit Cost ⇅
+| Infl. % / Scale ×
+| Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
 | Lead Time (D) ⇅ D
-| Margin / Ctg % ⇅
+| Category
+| Markup ⇅
 | Unit Sell Price ⇅
 | Total Sell Price ⇅
 | Discount%
@@ -467,8 +486,12 @@ Quote Readiness — 3 of 4 items complete 75 %
 [Supplier A]
 | [2.00] |
 [100.00] [USD]
-| 200.00 USD | 200.00 USD | [10.00] |
-[30.00] / [5.00]
+|
+[0.00] % [1.00] ×
+|
+[] [0.00]
+| 200.00 USD | 200.00 USD | [10.00] | [—] |
+[Custom %] [33.50]
 |
 ✏️
 163.19 USD
@@ -489,8 +512,12 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [250.50] [USD]
-| 250.50 USD | 250.50 USD | [10.00] |
-[20.00] / [0.00]
+|
+[0.00] % [1.00] ×
+|
+[] [0.00]
+| 250.50 USD | 250.50 USD | [10.00] | [—] |
+[Custom %] [20.00]
 |
 ✏️
 339.80 USD
@@ -511,8 +538,12 @@ Q [Quotation]
 [Supplier B]
 | [40.00] |
 [12.34] [USD]
-| 493.60 USD | 493.60 USD | [10.00] |
-[35.00] / [0.00]
+|
+[0.00] % [1.00] ×
+|
+[] [0.00]
+| 493.60 USD | 493.60 USD | [10.00] | [—] |
+[Custom %] [35.00]
 |
 ✏️
 20.60 USD
@@ -532,8 +563,12 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [0.00] [USD]
-| 0.00 USD | 0.00 USD | [10.00] |
-[0.00] / [0.00]
+|
+[0.00] % [1.00] ×
+|
+[] [0.00]
+| 0.00 USD | 0.00 USD | [10.00] | [—] |
+[Custom %] [0.00]
 | ↑ parent | 0.00 USD | [0.00] |
 Q [Quotation]
 |
@@ -541,8 +576,8 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 944.10 USD | 944.10 USD | | | | 1,490.25 USD | | |
-| GRAND TOTAL | 1,490.25 USD | | |
+| TOTALS | 944.10 USD | 944.10 USD | | | | | 1,490.25 USD | | |
+| LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 1,490.25 USD | | |
 
 ===== TAB 🚢 Freight & Tariffs
 
@@ -558,9 +593,6 @@ Each outbound entry is a separate quoted line with its own margin. Not allocated
 No outbound freight entries yet.
 + Add Outbound Entry
 Total out cost: 0.00 USD Total out sell: 0.00 USD
-📦 Packing & Crating
-Added as a separate quoted line item (distributes into item sell prices when outbound freight distribution is enabled). Active whenever enabled — a warning is shown if Incoterm is EXW.
-[ ] Enable Packing & Crating
 
 ===== TAB 📅 Schedule
 
@@ -597,17 +629,25 @@ CIW · Rev 0
 Fixture
 Q-TEST · Test Co · UK
 Incoterm: EXW Fulfilment: 2026-11-26 25 d lead time 4 items Very High Cost Confidence
-Sell Price
-1,490.25
-USD
-Landed COGS
-944.10 USD
-Inc. all duties & freight
-Grand Total
-1,490.25 USD
-GM: 36.65% | EBITDA: 26.65%
-📊 EBITDA Calculation: Gross Margin ( 36.65% ) - S&A Expense ( 10.00% ) = EBITDA 26.65%
-Expected profit margin after Sales & Administration expenses. Configure S&A % in Setup tab.
+Total Contract Value
+2,000.00
+USD · EBITDA 15.83%
+GCS Commercial Summary
+| Tab | Type | COGS | Sales | Contribution | EBITDA | EBITDA % | Target | Band | Price (rounded) | Discount
+| Sheet 1 | Section | 978.07 | 1,524.22 | 546.15 | 241.30 | 15.83% | — | — | 2,000.00 | —
+| Project P&L (Excel GCS definitions)
+| Sales (sections + included options) | 1,524.22 USD | 100.00%
+| Cost of goods (incl. provisions) | 978.07 USD | 64.17%
+| Contribution margin | 546.15 USD | 35.83%
+| Manufacturing & Engineering | 152.42 USD | 10.00%
+| Gross margin | 393.72 USD | 25.83%
+| Sales & Administration | 152.42 USD | 10.00%
+| EBITDA | 241.30 USD | 15.83%
+| No segment set: choose one in Setup (or per tab) to see the EBITDA target.
+| Contract value · EXW
+| Sheet 1 | 2,000.00 USD
+| Contract value (rounded) | 2,000.00 USD
+| Total contract value | 2,000.00 USD
 Currency Breakdown
 ▶
 1 currency • Click to expand

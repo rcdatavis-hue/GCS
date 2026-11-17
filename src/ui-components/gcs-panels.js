@@ -23,7 +23,7 @@ var GcsTabSettings = memo(function GcsTabSettings({ sheet, setCostingSheets, loc
   var band = summ && summ.band ? summ.band : '';
   var chip = (txt, color, bg) => gcsH("span", { style: { fontSize: 10.5, padding: '1px 7px', borderRadius: 10, background: bg || '#f1f5f9', color: color || '#334155', whiteSpace: 'nowrap' } }, txt);
   return gcsH("div", { className: "pcw-card", style: { padding: '8px 12px' }, "data-gcs": "tab-settings" },
-    gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', cursor: 'pointer' }, onClick: () => setOpen(o => !o) },
+    gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', overflow: 'hidden', whiteSpace: 'nowrap', cursor: 'pointer' }, onClick: () => setOpen(o => !o) },
       gcsH("span", { style: { fontSize: 12, fontWeight: 700, color: 'var(--pcw-text-primary)' } }, (open ? "▾ " : "▸ ") + "Tab settings"),
       chip(st.type === 'option' ? (st.include ? 'Option · included' : 'Option · not included') : 'Plant section', st.type === 'option' && !st.include ? '#92400e' : undefined, st.type === 'option' && !st.include ? '#fef3c7' : undefined),
       chip('Default ' + st.defaultLevel), chip('Discount ' + discLabel),

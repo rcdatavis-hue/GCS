@@ -13,7 +13,7 @@ const APP_SHORT = 'GCS';
 const FILE_EXT = '.gcs';                    // saves as .gcs; still opens PCW .pcw files
 const FORKED_FROM = 'PCW v0.8 · 2026-11-17';
 
-const PCW_VERSION = 'v0.1';
+const PCW_VERSION = 'v0.2';
 const PCW_BUILD = '2026-11-17';
 
 const sanitizeHTML = (val) => {
@@ -33,14 +33,24 @@ return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).
 
 // Compute a deterministic state hash for approval integrity checking.
 // We hash: items costs/margins, grand total, revision — enough to detect tampering.
-const computeApprovalHash = async (proj, items, grand) => {
+const computeApprovalHash = async (proj, items, grand, sheets) => {
+// GCS: covers everything that sets the price: line cost, quantity, markup level or Custom %, inflation and
+// scaling (typed or automatic inputs), the tab each line is on, every tab's markup table / discount /
+// provisions / type, the project-level GCS settings, and the total contract value.
 const payload = JSON.stringify({
  rev: proj.rev,
  sellCcy: proj.sellCcy,
  grand: Math.round(grand * 100), // cents to avoid float noise
+ gcs: { mAndE: proj.mAndE ?? null, sAndA: proj.sAndAExpense ?? null, discount: proj.gcsDiscount ?? null, roundTo: proj.roundTo ?? null,
+   plantFeed: proj.plantFeed ?? null, inflationPerMonth: proj.inflationPerMonth ?? null, scalingExponent: proj.scalingExponent ?? null,
+   costingDate: proj.costingDate || null, segment: proj.segment || null },
+ sheets: (sheets || []).map(s => ({ id: s.id, type: s.type || null, include: !!s.include, markup: s.markup || null, defaultLevel: s.defaultLevel || null,
+   discount: s.discount ?? null, provisions: s.provisions || null })),
  items: items
   .filter(i => i.type !== 'heading')
-  .map(i => ({ id: i.id, pn: i.partNumber, qty: i.qty, cost: i.unitCost, margin: i.margin, contingency: i.contingency }))
+  .map(i => ({ id: i.id, pn: i.partNumber, qty: i.qty, cost: i.unitCost, margin: i.margin, contingency: i.contingency,
+    level: i.markupLevel || null, infl: i.inflationPct ?? null, scale: i.scalingFactor ?? null, date: i.costDate || null,
+    size: i.sizeCapacity ?? null, sheet: i.sheetId || null, sub: i.subCat || null }))
   .sort((a,b) => a.id.localeCompare(b.id)),
 });
 return sha256(payload);
@@ -48,8 +58,8 @@ return sha256(payload);
 
 // Returns 'match' | 'mismatch' | 'pending' given an approval record and current state.
 // 'pending' means we haven't computed yet (async).
-const checkApprovalIntegrity = async (approval, proj, items, grand) => {
+const checkApprovalIntegrity = async (approval, proj, items, grand, sheets) => {
 if (!approval.stateHash) return 'no-hash';
-const current = await computeApprovalHash(proj, items, grand);
+const current = await computeApprovalHash(proj, items, grand, sheets);
 return current === approval.stateHash ? 'match' : 'mismatch';
 };

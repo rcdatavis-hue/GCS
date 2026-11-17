@@ -22,7 +22,7 @@ async function openApp(browser,htmlPath,stateJson,{width=1600,height=1000,extraS
   const page=await ctx.newPage();const errors=[];
   page.on('pageerror',e=>errors.push(String(e)));
   page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-  page.on('dialog',d=>d.dismiss());
+  page.on('dialog',d=>d.type()==='beforeunload'?d.accept():d.dismiss());
   if(stateJson!=null) await ctx.addInitScript(([s,key,extra])=>{try{if(!sessionStorage.getItem('__seeded')){localStorage.clear();Object.entries(extra||{}).forEach(([k,v])=>localStorage.setItem(k,v));if(s!==null)localStorage.setItem(key,s);sessionStorage.setItem('__seeded','1');}}catch(e){}},[stateJson===''?null:stateJson,STATE_KEY,extraStorage]);
   await page.goto('http://pcw.test/index.html');
   await page.waitForSelector('.pcw-nav .pcw-tab',{timeout:30000});
