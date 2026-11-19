@@ -34,9 +34,24 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/export-check.js` / `test/export-html.js`: Excel export (GCS Summary sheet total = app) and HTML export run cleanly.
 - `test/isolation.js dist/index.html`: ignores and preserves PCW browser data; opens `.pcw` files.
 - `test/make-big.js` + `test/perf.js`: 10,000-line timing.
+- `test/scm-engine.js dist/index.html <SCM_Master_Index.xlsm> <model.xlsx>`: SCM parsing, search, V1/V2 line building,
+  insertion and latest-cost picking against real files (15 checks).
+- `test/scm-ui.js dist/index.html <SCM_Master_Index.xlsm> <model.xlsx>`: SCM Search end to end with a simulated synced
+  folder (stubbed `showDirectoryPicker`) and a stubbed feed (14 checks). `SHOT=/tmp/x` saves screenshots.
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.3 · 2026-11-19: SCM (Sales Cost Model) search and import, replacing the Excel GCS "SCM Search" macro and sheet.
+  - Engine `engine/scm.js`: reads `SCM_Master_Index_v1.xlsm` (catalogue, model lines, Data Quality, Refresh Log) or
+    every SCM file directly; V1 and V2 model files (V2 adds BOM level, tag and supplier reference; BOM levels become
+    parent/child lines); search with the 12 Excel filters (drawing number searches every model line).
+  - Library access: the synced Commercial Costing Program folder through the browser folder picker (Chrome/Edge),
+    remembered between sessions; or open the index file directly. Imports read each model's own file when found
+    (latest edits), else the index copy, and say which.
+  - "SCM Search" button next to "+ Add Tab": filters, results, import basket, warnings for non-Approved models and
+    index data-quality entries, destination tab and position (default: the line you were on, as in Excel).
+  - Each model comes in under a heading line; SAP items in Part No.; quantities as they are; no sizing from the model
+    rate. With the feed connected, empty costs are filled from the latest PO/PQ for the project BU.
 - v0.2 · 2026-11-17: Excel GCS costing method (see project doc claude/GCS_EXCEL_LOGIC_MAP.md).
   - Engine `engine/gcs.js`: markup levels (margin on sell) per tab, Custom %; unit cost × scaling × (1 + inflation),
     both automatic as in Excel (0.5%/month since the cost date; (plant feed ÷ size)^0.6) and overridable per line;

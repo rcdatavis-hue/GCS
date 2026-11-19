@@ -7,5 +7,6 @@
  "gcs.js",
  "pricing.js",
  "feed.js",
+ "scm.js",
  "state.js"
 ]
