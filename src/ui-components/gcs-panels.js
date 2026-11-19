@@ -201,3 +201,18 @@ var GcsCostSourceCell = function GcsCostSourceCell({ n, bu, locked, updItemMerge
         h("button", { type: "button", className: "pcw-btn pcw-btn-secondary", style: { fontSize: 11, padding: '2px 8px' }, onClick: () => { setOpen(null); showCostHistory(n.id, n.partNumber, true); } }, "Full cost history"))),
       document.body) : null);
 };
+
+// ═══ COLLAPSIBLE CARD ═════════════════════════════════════════════════════════════════════════════════════
+// Card with a clickable title that hides its body; collapsed by default unless defaultOpen.
+// Used for Summary sections that are reference detail rather than headline (e.g. Selected Suppliers).
+var GcsCollapsibleCard = function GcsCollapsibleCard({ title, summary, defaultOpen, id, children }) {
+  var h = React.createElement;
+  var [open, setOpen] = useState(!!defaultOpen);
+  return h("div", { className: "pcw-card", "data-collapsible": id, style: { padding: open ? undefined : '10px 16px' } },
+    h("button", { type: "button", onClick: () => setOpen(o => !o), "aria-expanded": open, "data-collapsible-toggle": id,
+      style: { display: 'flex', alignItems: 'center', gap: 8, width: '100%', border: 'none', background: 'none', padding: 0, cursor: 'pointer', textAlign: 'left', marginBottom: open ? 10 : 0 } },
+      h("span", { style: { fontSize: 11, color: '#94a3b8', width: 10 } }, open ? '▾' : '▸'),
+      h("span", { style: { fontWeight: 700, fontSize: 13, color: 'var(--pcw-text-primary)' } }, title),
+      !open && summary ? h("span", { style: { fontSize: 11.5, color: '#64748b', marginLeft: 'auto' } }, summary) : null),
+    open ? children : null);
+};

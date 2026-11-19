@@ -676,9 +676,7 @@ Currency Breakdown
 Margin Analysis
 ▶
 4 items analyzed • Click to expand
-Selected Suppliers
-| Supplier | Total Projected Spend (GBP) | % of Costs | Longest Lead Time (Days)
-| Supplier A | 5,309.24 | 100.00% | 10
+▸ Selected Suppliers 1 supplier · top: Supplier A (100.00%)
 Price Build-Up
 Items COGS 5,051.63 ( 67.6 %)
 Inbound Freight (allocated) 257.61 ( 3.4 %)

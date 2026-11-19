@@ -708,11 +708,7 @@ Currency Breakdown
 Margin Analysis
 ▶
 5 items analyzed • Click to expand
-Selected Suppliers
-| Supplier | Total Projected Spend (USD) | % of Costs | Longest Lead Time (Days)
-| Supplier B | 1,732.68 | 60.16% | 10
-| Supplier A | 944.85 | 32.81% | 10
-| Supplier C | 202.47 | 7.03% | 10
+▸ Selected Suppliers 3 suppliers · top: Supplier B (60.16%)
 Price Build-Up
 Items COGS 2,050.00 ( 53.4 %)
 Inbound Freight (allocated) 830.00 ( 21.6 %)

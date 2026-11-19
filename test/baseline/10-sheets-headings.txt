@@ -651,9 +651,7 @@ Cost Breakdown by Sheet
 | Sheet | Items | Landed Cost | Sell Price | GM% | % of Total Cost
 | Sheet 1 | 3 | 1,354.00 | 1,637.17 | 17.30% | 23.74%
 | Options | 2 | 4,350.00 | 5,344.72 | 18.61% | 76.26%
-Selected Suppliers
-| Supplier | Total Projected Spend (USD) | % of Costs | Longest Lead Time (Days)
-| Supplier A | 5,704.00 | 100.00% | 10
+▸ Selected Suppliers 1 supplier · top: Supplier A (100.00%)
 Price Build-Up
 Items COGS 5,704.00 ( 81.7 %)
 Inbound Freight (allocated) 0.00 ( 0.0 %)
