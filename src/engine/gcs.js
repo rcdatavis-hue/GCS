@@ -324,3 +324,6 @@ const gcsInflationBand = (pct, item) => {
   if (v >= GCS_INFLATION_BANDS.amber) return { key: 'amber', bg: '#fef9c3', fg: '#854d0e' };
   return { key: 'green', bg: '#dcfce7', fg: '#166534' };
 };
+
+// Category / sub-category name from its code (the costing column shows codes only; names go in tooltips).
+const gcsCategoryName = code => { if (!code) return ''; const x = (code.length === 2 ? GCS_SUBCATEGORIES : GCS_CATEGORIES).find(c => c.code === code); return x ? x.name : ''; };

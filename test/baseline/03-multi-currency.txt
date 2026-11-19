@@ -464,7 +464,6 @@ Sheet 1 ✏️
 | Unit Cost ⇅
 | Cost Source
 | Inflation %
-| Cost Date
 | Total Cost ⇅
 | Landed Cost
 | Category
@@ -488,8 +487,6 @@ Sheet 1 ✏️
 [1,000.00] [EUR]
 | — ▾ |
 [0.00] %
-|
-[]
 | 858.70 GBP | 902.49 GBP | [—] |
 [Custom %] [22.00]
 |
@@ -514,8 +511,6 @@ Q [Quotation]
 [500.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 1,185.00 GBP | 1,245.43 GBP | [—] |
 [Custom %] [25.00]
 |
@@ -540,8 +535,6 @@ Q [Quotation]
 [420.00] [GBP]
 | — ▾ |
 [0.00] %
-|
-[]
 | 420.00 GBP | 441.42 GBP | [—] |
 [Custom %] [18.00]
 |
@@ -566,8 +559,6 @@ Q [Quotation]
 [9,500.00] [BRL]
 | — ▾ |
 [0.00] %
-|
-[]
 | 2,587.93 GBP | 2,719.90 GBP | [—] |
 [Custom %] [30.00]
 |

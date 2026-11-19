@@ -29,7 +29,7 @@ const FEED = {
 
 (async () => {
   const b = await launch();
-  const { page, errors } = await openApp(b, html, JSON.stringify(st));
+  const { page, errors } = await openApp(b, html, JSON.stringify(st), { extraStorage: { 'gcs-col-visibility': JSON.stringify({ costBasis: true, _gcsCostDateDefault: true, _gcsLeadTimeDefault: true, leadTime: false }) } });
   await page.evaluate(FEED => { DataService.__seedSheets(FEED); DataService.isConnected = () => true; }, FEED);
   // engine
   const eng = await page.evaluate(async () => {

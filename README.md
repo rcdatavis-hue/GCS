@@ -41,10 +41,14 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default, manual cost override (22 checks).
 - `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
 - `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
-- `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours (12 checks).
+- `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours, cost date default, category codes (14 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.10 · 2026-11-19: fewer visible columns. Cost Date hidden by default (layouts saved earlier switched once,
+  `_gcsCostDateDefault`; inflation's tooltip still states the months since the cost date). Category shows codes
+  only (A, C, C5 …; 46 px), with the name in the option tooltip, the group heading and the cell tooltip
+  (`gcsCategoryName`). Tests: `test/scale-infl.js` 14 checks; UI tests that type cost dates show the column.
 - v0.9 · 2026-11-19:
   - Scaling is its own column, "Scale × / Size" (scaling factor + the equipment size that drives it), hidden by
     default and shown automatically when the project or any tab has a Liquids segment (applied on load and when

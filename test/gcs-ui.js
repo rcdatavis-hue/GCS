@@ -23,7 +23,7 @@ const headerTotal = page => page.$eval('.pcw-header-total', e => e.innerText).th
 (async () => {
   const b = await launch();
   // ── 1. markup levels and tab markup table ──
-  let { page, errors } = await openApp(b, html, JSON.stringify(gcsState()));
+  let { page, errors } = await openApp(b, html, JSON.stringify(gcsState()), { extraStorage: { 'gcs-col-visibility': JSON.stringify({ costBasis: true, _gcsCostDateDefault: true, _gcsLeadTimeDefault: true, leadTime: false }) } });
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForSelector('[data-cell="L1-margins"]');
   ok('new line follows tab default CROWN (A) 48%', Math.abs(await tabSales(page) - 2000 / 0.52) < 0.01, await tabSales(page));
   await page.selectOption('[data-cell="L1-margins"]', 'CPM (B)'); await page.waitForTimeout(300);
@@ -69,7 +69,7 @@ const headerTotal = page => page.$eval('.pcw-header-total', e => e.innerText).th
   await page.context().close();
   // ── 4. old files: contingency folded once, levels after reload stay ──
   const old = JSON.parse(JSON.stringify(base)); delete old.gcsFormat;   // fixture 01: margin 30 / contingency 5 on line 1
-  ({ page, errors } = await openApp(b, html, JSON.stringify(old)));
+  ({ page, errors } = await openApp(b, html, JSON.stringify(old), { extraStorage: { 'gcs-col-visibility': JSON.stringify({ costBasis: true, _gcsCostDateDefault: true, _gcsLeadTimeDefault: true, leadTime: false }) } }));
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForTimeout(400);
   const firstId = old.items.find(i => i.type !== 'heading').id;
   const m = await page.$eval(`[data-cell="${firstId}-margin"]`, e => e.value).catch(() => null);

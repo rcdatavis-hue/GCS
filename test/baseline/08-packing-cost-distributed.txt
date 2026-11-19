@@ -464,7 +464,6 @@ Sheet 1 ✏️
 | Unit Cost ⇅
 | Cost Source
 | Inflation %
-| Cost Date
 | Total Cost ⇅
 | Landed Cost
 | Category
@@ -488,8 +487,6 @@ Sheet 1 ✏️
 [800.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 800.00 USD | 800.00 USD | [—] |
 [Custom %] [25.00]
 |
@@ -514,8 +511,6 @@ Q [Quotation]
 [200.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 1,000.00 USD | 1,075.00 USD | [—] |
 [Custom %] [15.00]
 |

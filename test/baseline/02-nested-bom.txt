@@ -464,7 +464,6 @@ Sheet 1 ✏️
 | Unit Cost ⇅
 | Cost Source
 | Inflation %
-| Cost Date
 | Total Cost ⇅
 | Landed Cost
 | Category
@@ -488,8 +487,6 @@ Sheet 1 ✏️
 [50.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 430.00 USD | 430.00 USD | [—] |
 [Custom %] [28.00]
 |
@@ -514,8 +511,6 @@ L 1 └
 [30.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 90.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
@@ -534,8 +529,6 @@ BOM L 1 └
 [0.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 75.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
@@ -554,8 +547,6 @@ L 2 └
 [15.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 60.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
@@ -574,8 +565,6 @@ L 2 └
 [7.50] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 15.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
@@ -594,8 +583,6 @@ Q [Quotation]
 [0.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 240.00 USD | 240.00 USD | [—] |
 [Custom %]
 73.3
@@ -621,8 +608,6 @@ L 1 └
 [120.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 240.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
@@ -641,8 +626,6 @@ Q [Quotation]
 [80.00] [USD]
 | — ▾ |
 [0.00] %
-|
-[]
 | 240.00 USD | 240.00 USD | [—] |
 [Custom %]
 46.7
