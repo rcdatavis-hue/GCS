@@ -584,6 +584,7 @@ Total Contract Value
 4,000.00
 USD · EBITDA -0.91%
 GCS Commercial Summary
+⬇ Scorecard (.xlsx)
 | Tab | Type | COGS | Sales | Contribution | EBITDA | EBITDA % | Target | Band | Price (rounded) | Discount
 | Sheet 1 | Section | 1,934.67 | 2,391.05 | 456.37 | -21.84 | -0.91% | — | — | 3,000.00 | —
 Costing confidence (cost-weighted source score: Quotation 5 · Pricelist 4 · Project Cost / EQD 3 · Estimate 2 · none 0)

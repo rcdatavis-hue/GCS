@@ -46,9 +46,27 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
 - `test/eqd-ui.js dist/index.html <feed with EQD sheet.xlsx>`: EQD picker, scaling rule, clear, CNY conversion, EQD Search (12 checks).
 - `test/confidence.js dist/index.html`: confidence score per tab, project and header; ICUG hidden (8 checks).
+- `test/scorecard.js dist/index.html`: scorecard export cells, overflow grouping, LibreOffice recalculation (19 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.19 · 2026-11-19: Scorecard export ("⬇ Scorecard (.xlsx)" in the Summary's GCS card).
+  - The Engineered Solutions scorecard (ES_26.13) is embedded as a blank template (`engine/scorecard-template.js`,
+    built by `tools/make-scorecard-template.py` from a filled scorecard: entry cells, old cached results, links and
+    narrative text boxes emptied; hidden legacy sheets emptied of constants; calcChain dropped; recalculation on open).
+    The app is ~1.1 MB larger.
+  - `engine/scorecard.js`: `gcsScorecardData` (USD at the project rates, included tabs) and `gcsBuildScorecard`
+    (JSZip; writes straight into the sheet XML so styles, dropdowns, formulas and charts are kept). Fills the Dashboard
+    header, suggested Tier (Tier 1 names; else existing / new from the feed's sales orders), new/existing, costing
+    confidence (High ≥ 80% of cost quoted within 12 months; Low > 20% estimates or > 5 years old; else Medium),
+    supplier currencies, payment currency, discount, Incoterm, M&E / S&A, links, freight; CashFlow equipment value,
+    freight, agent commission and the section table (CPM = category B); Costing Confidence line blocks (A → Fabricated,
+    B → CPM, others → 3rd Party; biggest first, overflow grouped in the last row; rigor from the source: Quotation / EQD
+    QUOTE, Pricelist SUPPLY CHAIN, Project Cost PROJECT COST, SCM lines COST MODEL, Estimate ESTIMATE; confidence by
+    age) and provisions (start-up risk, freight, duties); a "GCS Lines" sheet lists every line with notes on what was
+    suggested and what is left blank. Region / sanctions and other judgement fields stay manual.
+  - SharePoint import also reads the customer's city. Test `test/scorecard.js` (19 checks; recalculates with
+    LibreOffice when available).
 - v0.18 · 2026-11-19: Item Cost Use Guidance hidden (aftermarket only): not offered in the Source lists (`GCS_HIDDEN_SOURCES`;
   a line or default that already uses it keeps it), no "✦ Est" / "Apply Est." estimate buttons. `test/confidence.js` 8 checks.
 - v0.17 · 2026-11-19: costing confidence is a weighted score again, as in the PCW. Each source has a score out of 5

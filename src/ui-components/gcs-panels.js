@@ -127,7 +127,7 @@ var GcsProjectSettings = function GcsProjectSettings({ proj, setLockedProj }) {
 };
 
 // ── Commercial summary (Summary tab) ──
-var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj }) {
+var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj, exportScorecard }) {
   if (!gcsSummary) return null;
   var { tabs, project: P } = gcsSummary;
   var ccy = proj.sellCcy;
@@ -138,7 +138,9 @@ var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj }
     gcsH("td", { style: { padding: '4px 8px', fontSize: 12, fontWeight: o.bold ? 700 : 400, paddingLeft: o.indent ? 20 : 8 } }, label), td(gcsMoney(val, ccy), { bold: o.bold, color: o.color }), td(pct === null ? '' : fp(pct), { color: '#64748b' }));
   return gcsH(Card, null,
     gcsH("div", { "data-gcs": "summary" },
-      gcsH(H3, null, "GCS Commercial Summary"),
+      gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 10 } }, gcsH(H3, null, "GCS Commercial Summary"),
+        exportScorecard ? gcsH("button", { className: "pcw-btn pcw-btn-secondary", "data-gcs": "scorecard", style: { marginLeft: 'auto', fontSize: 11.5, padding: '4px 10px' }, onClick: () => exportScorecard(),
+          title: 'Download the Engineered Solutions scorecard (.xlsx) filled from this GCS: header, P&L inputs, supplier currencies, Costing Confidence lines and CashFlow sections. Suggested answers (customer tier, new/existing, costing confidence) need checking; judgement fields are left blank.' }, "\u2B07 Scorecard (.xlsx)") : null),
       gcsH("table", { style: { width: '100%', borderCollapse: 'collapse', marginBottom: 14 } },
         gcsH("thead", null, gcsH("tr", null, th('Tab'), th('Type'), th('COGS', 1), th('Sales', 1), th('Contribution', 1), th('EBITDA', 1), th('EBITDA %', 1), th('Target', 1), th('Band'), th('Price (rounded)', 1), th('Discount', 1))),
         gcsH("tbody", null, shown.map(t => gcsH("tr", { key: t.id, style: { borderBottom: '1px solid var(--pcw-border, #e2e8f0)', opacity: t.include ? 1 : 0.55 } },

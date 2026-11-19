@@ -8,5 +8,7 @@
  "pricing.js",
  "feed.js",
  "scm.js",
+ "scorecard-template.js",
+ "scorecard.js",
  "state.js"
 ]

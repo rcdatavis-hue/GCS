@@ -1108,6 +1108,15 @@ return {
  return out;
  },
 
+ // GCS scorecard: has this customer bought before (any sales order in any BU)? null when the feed has no SO sheet.
+ async customerHasOrders(code, name) {
+ const so = await loadSheet('salesOrders', false);
+ if (!so) return null;
+ const c = (code || '').toString().trim().toLowerCase(), n = (name || '').toString().trim().toLowerCase();
+ if (!c && !n) return null;
+ return so.some(r => (c && (r.customerCode || '').toString().trim().toLowerCase() === c) || (n && (r.customerName || '').toString().trim().toLowerCase() === n));
+ },
+
  // Tests only: put parsed sheet rows in the cache (no feed file needed).
  __seedSheets(sheets) { Object.assign(_cache, sheets || {}); },
 
