@@ -463,8 +463,8 @@ Quote Readiness — 3 of 4 items complete 75 %
 | Qty ⇅
 | Unit Cost ⇅
 | Cost Source
-| Infl. % / Scale ×
-| Cost Date / Size
+| Inflation %
+| Cost Date
 | Total Cost ⇅
 | Landed Cost
 | Category
@@ -487,9 +487,9 @@ Quote Readiness — 3 of 4 items complete 75 %
 | [2.00] |
 [100.00] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 200.00 USD | 200.00 USD | [—] |
 [Custom %] [33.50]
 |
@@ -513,9 +513,9 @@ Q [Quotation]
 | [1.00] |
 [250.50] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 250.50 USD | 250.50 USD | [—] |
 [Custom %] [20.00]
 |
@@ -539,9 +539,9 @@ Q [Quotation]
 | [40.00] |
 [12.34] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 493.60 USD | 493.60 USD | [—] |
 [Custom %] [35.00]
 |
@@ -564,9 +564,9 @@ Q [Quotation]
 | [1.00] |
 [0.00] [USD]
 | — |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 0.00 USD | 0.00 USD | [—] |
 [Custom %] [0.00]
 | ↑ parent | 0.00 USD | [0.00] |

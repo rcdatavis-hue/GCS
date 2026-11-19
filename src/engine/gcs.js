@@ -313,3 +313,14 @@ const gcsManualCostPatch = (item, patch) => {
   }
   return out;
 };
+
+// Inflation traffic light (how stale the reused cost is): < 5% green, 5% to under 10% amber, 10% and over red.
+// Lines with no cost date and no typed inflation (nothing to judge) get no colour.
+const GCS_INFLATION_BANDS = { amber: 5, red: 10 };
+const gcsInflationBand = (pct, item) => {
+  const v = Number(pct) || 0;
+  if (!(item && (item.costDate || gcsHasValue(item.inflationPct))) && v === 0) return null;
+  if (v >= GCS_INFLATION_BANDS.red) return { key: 'red', bg: '#fee2e2', fg: '#991b1b' };
+  if (v >= GCS_INFLATION_BANDS.amber) return { key: 'amber', bg: '#fef9c3', fg: '#854d0e' };
+  return { key: 'green', bg: '#dcfce7', fg: '#166534' };
+};

@@ -464,8 +464,8 @@ Options
 | Qty ⇅
 | Unit Cost ⇅
 | Cost Source
-| Infl. % / Scale ×
-| Cost Date / Size
+| Inflation %
+| Cost Date
 | Total Cost ⇅
 | Landed Cost
 | Category
@@ -490,9 +490,9 @@ Options
 | [3.00] |
 [100.00] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 300.00 USD | 300.00 USD | [—] |
 [Custom %] [25.00]
 |
@@ -520,9 +520,9 @@ Q [Quotation]
 | [1.00] |
 [55.00] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 55.00 USD | 55.00 USD | [—] |
 [Custom %] [40.00]
 |
@@ -548,9 +548,9 @@ Q [Quotation]
 | [1.00] |
 [999.00] [USD]
 | — ▾ |
-[0.00] % [1.00] ×
+[0.00] %
 |
-[] [0.00]
+[]
 | 999.00 USD | 999.00 USD | [—] |
 [Custom %] [25.00]
 |

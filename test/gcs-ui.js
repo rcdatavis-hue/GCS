@@ -10,7 +10,7 @@ function gcsState() {
   const st = JSON.parse(JSON.stringify(base));
   st.gcsFormat = 1;
   st.project = { ...st.project, defaultDealer: 0, discountMitigation: 0, costingDate: '2026-11-17', plantFeed: 400, mAndE: 10, sAndAExpense: 10, segment: 'Crush (Preparation & Pressing)' };
-  st.costingSheets = [{ id: 'main', name: 'Plant Section 1', provisions: { startupRisk: 0, fcaPacking: 0, c5Duty: 0, h1Duty: 0 } },
+  st.costingSheets = [{ id: 'main', name: 'Plant Section 1', segment: 'Liquids (Refining, Biodiesel, Oleochemicals)', provisions: { startupRisk: 0, fcaPacking: 0, c5Duty: 0, h1Duty: 0 } },
                       { id: 'opt', name: 'Option A', type: 'option', include: false, provisions: { startupRisk: 0, fcaPacking: 0, c5Duty: 0, h1Duty: 0 } }];
   st.items = [
     { id: 'L1', type: 'item', parentId: null, sheetId: 'main', partNumber: 'P1', description: 'Line 1', supplier: 'S', qty: 2, unitCost: 1000, ccy: 'USD', source: 'Quotation', margin: 0, discount: 0, leadTime: 5 },

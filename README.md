@@ -41,9 +41,18 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default, manual cost override (22 checks).
 - `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
 - `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
+- `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours (12 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.9 · 2026-11-19:
+  - Scaling is its own column, "Scale × / Size" (scaling factor + the equipment size that drives it), hidden by
+    default and shown automatically when the project or any tab has a Liquids segment (applied on load and when
+    that changes; the Columns menu can still override). "Cost Date / Size" is now "Cost Date"; "Infl. % / Scale ×"
+    is now "Inflation %".
+  - Inflation traffic light (`gcsInflationBand`): under 5% green, 5% to under 10% amber, 10% and over red; no colour
+    when the line has no cost date and no typed inflation. Typed values are bold with ↺.
+  - Test `test/scale-infl.js` (12 checks); `test/gcs-ui.js` fixture tab set to a Liquids segment.
 - v0.8 · 2026-11-19: fix: the TOTALS row under the costing table showed the whole project on every tab. It now
   totals the tab on screen (labelled with the tab name; same line figures as the GCS summary, before provisions);
   the LINE SALES TOTAL row below still covers all tabs. Test `test/tab-totals.js` (4 checks).
