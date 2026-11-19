@@ -38,11 +38,18 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
   insertion and latest-cost picking against real files (15 checks).
 - `test/scm-ui.js dist/index.html <SCM_Master_Index.xlsm> <model.xlsx>`: SCM Search end to end with a simulated synced
   folder (stubbed `showDirectoryPicker`) and a stubbed feed (14 checks). `SHOT=/tmp/x` saves screenshots.
-- `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default (20 checks).
-- `test/feed-rates.js dist/index.html`: rates refresh on feed connect; locked projects untouched; Summary suppliers collapsed (5 checks).
+- `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default, manual cost override (22 checks).
+- `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.7 · 2026-11-19:
+  - Exchange rates refresh automatically only on the first feed load of the session (reconnect at start-up or first
+    connect; unlocked projects). Later reconnects and re-reads leave them; use Setup "Refresh from Feed".
+  - Typing, pasting or filling down a cost clears a "Project Cost" source (other sources kept; a source pasted in
+    the same edit wins) along with the cost source location (`gcsManualCostPatch`). A currency change clears the
+    location only.
+  - Tests: `test/feed-rates.js` 7 checks, `test/cost-source.js` 22 checks.
 - v0.6 · 2026-11-19: exchange rates refresh automatically from the feed file's currency sheet whenever the feed is
   connected, reconnected on start-up or re-read (unlocked projects only; waits until the saved project has loaded).
   Summary: Selected Suppliers is a collapsible card, collapsed by default with a one-line summary

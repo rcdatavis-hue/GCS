@@ -6,14 +6,15 @@ const html = process.argv[2];
 const results = []; const ok = (name, cond, detail) => results.push({ name, pass: !!cond, detail });
 const base = JSON.parse(fs.readFileSync(__dirname + '/fixtures/01-flat-basic.json', 'utf8'));
 const feed = fs.readFileSync(__dirname + '/fixtures/feed-rates.xlsx').toString('base64');
+const feed2 = fs.readFileSync(__dirname + '/fixtures/feed-rates-2.xlsx').toString('base64');
 const stateWith = locked => { const st = JSON.parse(JSON.stringify(base)); st.gcsFormat = 1; st.project = { ...st.project, locked, ratesRefreshedAt: null }; return JSON.stringify(st); };
 
-async function connect(page) {
+async function connect(page, data = feed) {
   await page.evaluate(b64 => {
     const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
     const handle = { kind: 'file', name: 'PCW_Feed.xlsx', getFile: async () => new File([bin], 'PCW_Feed.xlsx', { lastModified: Date.now() }), queryPermission: async () => 'granted', requestPermission: async () => 'granted' };
     window.showOpenFilePicker = async () => [handle];
-  }, feed);
+  }, data);
   await page.$eval('button:has-text("Connect Feed File")', e => e.click());
   const loaded = await page.waitForFunction(() => /all sheets loaded/i.test(document.body.innerText), null, { timeout: 15000 }).then(() => true).catch(() => false);
   await page.waitForTimeout(800);
@@ -35,6 +36,15 @@ const ratesShown = page => page.evaluate(() => {
   const after = await ratesShown(page);
   if (process.env.DBG) console.log(JSON.stringify({ before, after }));
   ok('rates refresh on connecting the feed (EUR 0.92 → 0.8765, GBP 0.79 → 0.7654, BRL 5.8 → 5.4321)', /0\.8765/.test(after.out.EUR) && /0\.7654/.test(after.out.GBP) && /5\.4321/.test(after.out.BRL) && after.refreshed, JSON.stringify({ before: before.out, after: after.out, refreshed: after.refreshed }));
+  // reconnecting (a feed with different rates) does not change them; the manual refresh does
+  await page.click('button:has-text("Disconnect")'); await page.waitForTimeout(300);
+  await connect(page, feed2);
+  await page.click('.pcw-nav .pcw-tab >> nth=0'); await page.waitForTimeout(300);
+  const again = await ratesShown(page);
+  ok('reconnecting the feed later does not change the rates', /0\.8765/.test(again.out.EUR) && /0\.7654/.test(again.out.GBP), JSON.stringify(again.out));
+  await page.click('text=Refresh from Feed'); await page.waitForTimeout(600);
+  const manual = await ratesShown(page);
+  ok('"Refresh from Feed" still updates them', /^0\.5/.test(manual.out.EUR) && /^0\.4/.test(manual.out.GBP) && /^3\.3/.test(manual.out.BRL), JSON.stringify(manual.out));
   // Summary: Selected Suppliers collapsed by default, expands on click
   await page.click('.pcw-nav .pcw-tab >> text=Summary'); await page.waitForSelector('[data-collapsible="suppliers"]');
   const collapsed = await page.$eval('[data-collapsible="suppliers"]', e => ({ table: !!e.querySelector('table'), text: e.innerText }));

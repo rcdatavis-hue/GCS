@@ -296,3 +296,20 @@ const gcsCostFillPatch = (r, lc, plEntry, opts = {}) => {
   return null;
 };
 const gcsFeedLatestCost = async pn => { try { return pn && DataService.getLatestCost ? await DataService.getLatestCost(pn) : null; } catch (e) { return null; } };
+
+// A cost (or its currency) changed by hand — typing, paste, fill down: the line no longer holds the automatic
+// cost, so its provenance is cleared (Excel modManualCostOverride) and a "Project Cost" source is cleared too,
+// leaving the source for the user to set (the missing-source check then flags it). A source set in the same
+// edit (e.g. a pasted Source column) is kept. Returns the extra fields to merge (empty object if none).
+const gcsManualCostPatch = (item, patch) => {
+  const out = {};
+  const costChanged = patch.unitCost !== undefined && Number(patch.unitCost) !== Number(item.unitCost || 0);
+  const ccyChanged = patch.ccy !== undefined && patch.ccy !== (item.ccy || 'USD');
+  if (!costChanged && !ccyChanged) return out;
+  if (item._autoCost || item.costLocation || item.costRef) { out._autoCost = false; out.costLocation = ''; out.costRef = null; }
+  if (costChanged) {
+    if (item._autoPricelist) out._autoPricelist = false;
+    if (item.source === 'Project Cost' && patch.source === undefined) out.source = '';
+  }
+  return out;
+};

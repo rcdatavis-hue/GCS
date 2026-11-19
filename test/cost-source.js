@@ -60,6 +60,16 @@ const FEED = {
   await page.focus('[data-cell="L1-unitCost"]'); await page.waitForTimeout(120); await page.keyboard.press('Control+A'); await page.keyboard.type('650'); await page.keyboard.press('Tab'); await page.waitForTimeout(400);
   const r1b = await row('L1');
   ok('typed cost over an automatic one clears the location', /650/.test(r1b.cost) && /—/.test(r1b.loc), JSON.stringify(r1b));
+  const src1 = await page.$eval('[data-cell="L1-source"]', e => e.value);
+  ok('typed cost clears a "Project Cost" source', src1 === '', JSON.stringify(src1));
+  const mp = await page.evaluate(() => ({
+    keepQuote: gcsManualCostPatch({ unitCost: 5, source: 'Quotation' }, { unitCost: 6 }),
+    pc: gcsManualCostPatch({ unitCost: 5, source: 'Project Cost', _autoCost: true, costLocation: 'ECL', costRef: {} }, { unitCost: 6 }),
+    pastedSource: gcsManualCostPatch({ unitCost: 5, source: 'Project Cost' }, { unitCost: 6, source: 'Quotation' }),
+    same: gcsManualCostPatch({ unitCost: 5, source: 'Project Cost' }, { unitCost: 5 }),
+    ccy: gcsManualCostPatch({ unitCost: 5, ccy: 'USD', source: 'Project Cost', costLocation: 'ECL' }, { ccy: 'EUR' }) }));
+  ok('manual-cost rule: other sources kept; pasted source kept; unchanged cost no-op; currency change clears location only',
+    !('source' in mp.keepQuote) && mp.pc.source === '' && mp.pc.costLocation === '' && !('source' in mp.pastedSource) && Object.keys(mp.same).length === 0 && mp.ccy.costLocation === '' && !('source' in mp.ccy), JSON.stringify(mp));
   // Cost Source picker: latest cost per BU; choosing one pulls that BU's cost
   await page.click('[data-cell="L3-costLoc"] button'); await page.waitForSelector('[data-cost-picker="L3"] [data-cost-option]');
   const optsL3 = await page.$$eval('[data-cost-picker="L3"] [data-cost-option]', els => els.map(e => e.getAttribute('data-cost-option') + ':' + e.innerText.replace(/\s+/g, ' ')));
