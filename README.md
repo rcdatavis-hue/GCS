@@ -43,9 +43,18 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
 - `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours, cost date default, category codes (14 checks).
 - `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip, row shading (13 checks).
+- `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.13 · 2026-11-19: discounts easier to find.
+  - Setup: "Discounts & commissions" group in the GCS Costing Method card (project discount %, discount mitigation %,
+    dealer / agent %, default cost source). The PCW "Default Margins & Settings" card and its per-item
+    discount/contingency text are removed.
+  - Summary: the project discount % is editable in the GCS Commercial Summary's contract value block (same field;
+    notes when some tabs set their own).
+  - Costing: per-line Discount % hidden by default (saved layouts switched once, `_gcsLineDiscountDefault`); shown
+    automatically when the project has line discounts. Test `test/discounts.js` (8 checks).
 - v0.12 · 2026-11-19: row completion shading (green = cost and markup set, yellow = only one).
   - It read the raw margin field, which is 0 for lines priced by a markup level, so such lines never turned green;
     it now uses the same markup rule as readiness (level incl. PASS, Custom % > 0 or manual sell price), on screen and

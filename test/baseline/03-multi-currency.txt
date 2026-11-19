@@ -334,8 +334,6 @@ M&E % of sales
 [10.00]
 S&A % of sales
 [10.00]
-Project discount %
-[0.00]
 Round tab prices up to
 [1,000.00]
 Plant feed / capacity
@@ -346,6 +344,15 @@ Inflation % per month
 [0.50]
 Costing date
 [] today
+Discounts & commissions
+Project discount %
+[0.00]
+Discount mitigation %
+[0.00]
+Dealer / agent %
+[0.00]
+Default cost source
+[— select —]
 Project Information
 Project Name
 [Fixture]
@@ -395,18 +402,6 @@ ARS
 [1000]
 BRL
 [5.8]
-Default Margins & Settings
-Dealer/Agent % and Discount Mitigation % are set here and applied uniformly to all items. Margin and Contingency are editable per item.
-💡 How Discounts Work:
-Discount Mitigation % (here) = Added to your margin calculation to build in buffer for expected discounts
-Discount % (per item in Costing) = Actual discount offered to customer, applied after sell price
-Example: With 5% mitigation built in, you can give a 5% discount and still hit your target margin!
-Dealer / Agent %
-[0.00] %
-Discount Mitigation %
-[0.00] %
-Default Source
-[— select —]
 💾 Save & Restore
 ▶ 💾 Auto-save File ○ Not connected
 Save Package 🔀 Compare Revisions
@@ -470,7 +465,6 @@ Sheet 1 ✏️
 | Markup ⇅
 | Unit Sell Price ⇅
 | Total Sell Price ⇅
-| Discount%
 | Cost Source ⇅
 | OPTIONS
 | [ ] |
@@ -492,7 +486,7 @@ Sheet 1 ✏️
 |
 ✏️
 1,157.03 GBP
-| 1,157.03 GBP | [0.00] |
+| 1,157.03 GBP |
 Q [Quotation]
 |
 ✓
@@ -516,7 +510,7 @@ Q [Quotation]
 |
 ✏️
 553.52 GBP
-| 1,660.57 GBP | [0.00] |
+| 1,660.57 GBP |
 Q [Quotation]
 |
 ✓
@@ -540,7 +534,7 @@ Q [Quotation]
 |
 ✏️
 538.31 GBP
-| 538.31 GBP | [0.00] |
+| 538.31 GBP |
 Q [Quotation]
 |
 ✓
@@ -564,16 +558,16 @@ Q [Quotation]
 |
 ✏️
 1,942.79 GBP
-| 3,885.58 GBP | [0.00] |
+| 3,885.58 GBP |
 Q [Quotation]
 |
 ✓
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS — SHEET 1 | 5,051.63 GBP | 5,309.24 GBP | | | | 7,241.49 GBP | | |
-| Outbound Freight 1 : Freight 18 — cost 200.00 GBP at 15.00% margin | 235.29 | | |
-| LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 7,476.79 GBP | | |
+| TOTALS — SHEET 1 | 5,051.63 GBP | 5,309.24 GBP | | | | 7,241.49 GBP | |
+| Outbound Freight 1 : Freight 18 — cost 200.00 GBP at 15.00% margin | 235.29 | |
+| LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 7,476.79 GBP | |
 
 ===== TAB 🚢 Freight & Tariffs
 
@@ -659,6 +653,7 @@ GCS Commercial Summary
 | Contract value · EXW
 | Sheet 1 | 8,000.00 GBP
 | Contract value (rounded) | 8,000.00 GBP
+| Project discount [0.00] % | —
 | Shipping & freight (outbound, rounded; not in EBITDA) | 1,000.00 GBP
 | Total contract value | 9,000.00 GBP
 Currency Breakdown

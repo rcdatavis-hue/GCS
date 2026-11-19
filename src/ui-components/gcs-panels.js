@@ -91,7 +91,6 @@ var GcsProjectSettings = function GcsProjectSettings({ proj, setLockedProj }) {
           gcsH("option", { value: '' }, 'Select segment…'), GCS_SEGMENTS.map(sg => gcsH("option", { key: sg.name, value: sg.name }, `${sg.name} (${sg.over1m}% >$1m / ${sg.under1m}% <$1m)`)))),
       field('M&E % of sales', loc && Number(proj.mAndE ?? 10) !== loc.mAndE ? `Bid location standard is ${loc.mAndE}%` : 'Manufacturing & Engineering, % of sales. Deducted before gross margin.', numBox('mAndE', 10, { max: 100, isPercent: true })),
       field('S&A % of sales', 'Sales & Administration, % of sales. Deducted from gross margin to give EBITDA.', numBox('sAndAExpense', 10, { max: 100, isPercent: true })),
-      field('Project discount %', 'Applied to each tab price after rounding. A tab can set its own.', numBox('gcsDiscount', 0, { max: 100, isPercent: true })),
       field('Round tab prices up to', 'Each plant section / option price is rounded UP to this amount (Excel: 1,000).', numBox('roundTo', GCS_DEFAULT_ROUND_TO)),
       field('Plant feed / capacity', 'Plant size used by the automatic scaling factor: (plant feed ÷ equipment size)^exponent. Use the same unit as the line sizes.', numBox('plantFeed', 0)),
       field('Scaling exponent', 'Six-tenths rule by default (0.6).', numBox('scalingExponent', GCS_DEFAULT_SCALING_EXPONENT)),
@@ -99,11 +98,20 @@ var GcsProjectSettings = function GcsProjectSettings({ proj, setLockedProj }) {
       field('Costing date', 'Inflation is measured up to this date. Blank = today (as Excel), which means an unlocked estimate keeps inflating; set a date to freeze it.',
         gcsH("div", { style: { display: 'flex', gap: 6, alignItems: 'center' } },
           gcsH("input", { type: 'date', className: "pcw-input", value: proj.costingDate || '', disabled: locked, onChange: e => set('costingDate', e.target.value || '') }),
-          !proj.costingDate && gcsH("span", { style: { fontSize: 10.5, color: '#b45309' } }, 'today')))));
+          !proj.costingDate && gcsH("span", { style: { fontSize: 10.5, color: '#b45309' } }, 'today')))),
+    // Discounts & commissions (was the PCW "Default Margins & Settings" card)
+    gcsH("div", { style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.04em', margin: '16px 0 8px', paddingTop: 12, borderTop: '1px solid var(--pcw-border, #e2e8f0)' } }, "Discounts & commissions"),
+    gcsH("div", { className: "pcw-grid-2 gap-3", "data-gcs": "discounts" },
+      field('Project discount %', 'Discount offered to the customer, as in the Excel Summary: taken off each tab price after rounding up. A tab can set its own % in Tab settings.', numBox('gcsDiscount', 0, { max: 100, isPercent: true, "data-gcs-field": "gcsDiscount" })),
+      field('Discount mitigation %', 'Builds a buffer into every sell price so that a later customer discount of this % still keeps your margin: sell ÷ (1 − mitigation). Separate from the project discount above.', numBox('discountMitigation', 0, { max: 100, isPercent: true })),
+      field('Dealer / agent %', 'Commission paid to a dealer or sales agent, built into every sell price: sell ÷ (1 − dealer). Set to 0 if no agent is involved.', numBox('defaultDealer', 0, { max: 100, isPercent: true })),
+      field('Default cost source', 'Source pre-filled on new lines (sets the cost confidence). Autofilled costs set their own source.',
+        gcsH("select", { className: "pcw-input", value: proj.source || '', disabled: locked, onChange: e => set('source', e.target.value) },
+          gcsH("option", { value: '' }, '\u2014 select \u2014'), SOURCES.filter(x => x !== '').map(x => gcsH("option", { key: x, value: x }, x))))));
 };
 
 // ── Commercial summary (Summary tab) ──
-var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj }) {
+var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj }) {
   if (!gcsSummary) return null;
   var { tabs, project: P } = gcsSummary;
   var ccy = proj.sellCcy;
@@ -140,7 +148,13 @@ var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj }) {
           gcsH("tr", null, gcsH("td", { colSpan: 2, style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 4px' } }, 'Contract value' + (proj.incoterm ? ' · ' + proj.incoterm : ''))),
           tabs.filter(t => t.include && t.lineCount > 0).map(t => gcsH("tr", { key: t.id }, gcsH("td", { style: { padding: '3px 8px', fontSize: 12 } }, t.name), td(gcsMoney(t.price, ccy)))),
           gcsH("tr", { style: { borderTop: '1px solid var(--pcw-border, #e2e8f0)' } }, gcsH("td", { style: { padding: '4px 8px', fontSize: 12 } }, 'Contract value (rounded)'), td(gcsMoney(P.contractBeforeDiscount, ccy))),
-          P.discount ? gcsH("tr", null, gcsH("td", { style: { padding: '3px 8px', fontSize: 12 } }, 'Discount'), td('−' + gcsMoney(P.discount, ccy))) : null,
+          gcsH("tr", null, gcsH("td", { style: { padding: '3px 8px', fontSize: 12 } },
+            gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, 'Project discount',
+              gcsH(NumInput, { className: "pcw-input pcw-mono text-xs", style: { width: 64, textAlign: 'right', padding: '1px 4px' }, value: Number(proj.gcsDiscount) || 0, min: 0, max: 100, isPercent: true, disabled: !!proj.locked || !setLockedProj, "data-gcs-field": "summaryDiscount",
+                title: 'Project discount %, taken off each tab price after rounding (same field as in Setup). Tabs with their own % keep it.',
+                onChange: v => { if (setLockedProj && Number(v) !== (Number(proj.gcsDiscount) || 0)) setLockedProj(p => ({ ...p, gcsDiscount: Number(v) || 0 })); } }), '%',
+              tabs.some(t => t.include && t.lineCount > 0 && t.discountPct !== (Number(proj.gcsDiscount) || 0)) ? gcsH("span", { style: { fontSize: 10.5, color: '#64748b' } }, '(some tabs set their own)') : null)),
+            td(P.discount ? '−' + gcsMoney(P.discount, ccy) : '—')),
           P.shippingPrice ? gcsH("tr", null, gcsH("td", { style: { padding: '3px 8px', fontSize: 12 } }, 'Shipping & freight (outbound, rounded; not in EBITDA)'), td(gcsMoney(P.shippingPrice, ccy))) : null,
           gcsH("tr", { style: { borderTop: '2px solid var(--pcw-border, #e2e8f0)' } }, gcsH("td", { style: { padding: '6px 8px', fontSize: 13, fontWeight: 700 } }, 'Total contract value'), td(gcsMoney(P.contractValue, ccy), { bold: true, color: '#b45309' })))))));
 };

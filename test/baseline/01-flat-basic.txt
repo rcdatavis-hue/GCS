@@ -334,8 +334,6 @@ M&E % of sales
 [10.00]
 S&A % of sales
 [10.00]
-Project discount %
-[0.00]
 Round tab prices up to
 [1,000.00]
 Plant feed / capacity
@@ -346,6 +344,15 @@ Inflation % per month
 [0.50]
 Costing date
 [] today
+Discounts & commissions
+Project discount %
+[0.00]
+Discount mitigation %
+[3.00]
+Dealer / agent %
+[5.00]
+Default cost source
+[— select —]
 Project Information
 Project Name
 [Fixture]
@@ -395,18 +402,6 @@ ARS
 [1000]
 BRL
 [5.8]
-Default Margins & Settings
-Dealer/Agent % and Discount Mitigation % are set here and applied uniformly to all items. Margin and Contingency are editable per item.
-💡 How Discounts Work:
-Discount Mitigation % (here) = Added to your margin calculation to build in buffer for expected discounts
-Discount % (per item in Costing) = Actual discount offered to customer, applied after sell price
-Example: With 5% mitigation built in, you can give a 5% discount and still hit your target margin!
-Dealer / Agent %
-[5.00] %
-Discount Mitigation %
-[3.00] %
-Default Source
-[— select —]
 💾 Save & Restore
 ▶ 💾 Auto-save File ○ Not connected
 Save Package 🔀 Compare Revisions
@@ -470,7 +465,6 @@ Quote Readiness — Sheet 1: 3 of 4 lines complete 75 %
 | Markup ⇅
 | Unit Sell Price ⇅
 | Total Sell Price ⇅
-| Discount%
 | Cost Source ⇅
 | OPTIONS
 | [ ] |
@@ -492,7 +486,7 @@ Quote Readiness — Sheet 1: 3 of 4 lines complete 75 %
 |
 ✏️
 163.19 USD
-| 326.37 USD | [0.00] |
+| 326.37 USD |
 Q [Quotation]
 |
 ✓
@@ -516,7 +510,7 @@ Q [Quotation]
 |
 ✏️
 339.80 USD
-| 339.80 USD | [0.00] |
+| 339.80 USD |
 Q [Quotation]
 |
 ✓
@@ -540,7 +534,7 @@ Q [Quotation]
 |
 ✏️
 20.60 USD
-| 824.07 USD | [0.00] |
+| 824.07 USD |
 Q [Quotation]
 |
 ✓
@@ -560,15 +554,15 @@ Q [Quotation]
 [0.00] %
 | 0.00 USD | 0.00 USD | [—] |
 [Custom %] [0.00]
-| ↑ parent | 0.00 USD | [0.00] |
+| ↑ parent | 0.00 USD |
 Q [Quotation]
 |
 ○
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS — SHEET 1 | 944.10 USD | 944.10 USD | | | | 1,490.25 USD | | |
-| LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 1,490.25 USD | | |
+| TOTALS — SHEET 1 | 944.10 USD | 944.10 USD | | | | 1,490.25 USD | |
+| LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 1,490.25 USD | |
 
 ===== TAB 🚢 Freight & Tariffs
 
@@ -638,6 +632,7 @@ GCS Commercial Summary
 | Contract value · EXW
 | Sheet 1 | 2,000.00 USD
 | Contract value (rounded) | 2,000.00 USD
+| Project discount [0.00] % | —
 | Total contract value | 2,000.00 USD
 Currency Breakdown
 ▶

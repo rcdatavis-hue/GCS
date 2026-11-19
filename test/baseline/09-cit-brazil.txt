@@ -334,8 +334,6 @@ M&E % of sales
 [10.00]
 S&A % of sales
 [10.00]
-Project discount %
-[0.00]
 Round tab prices up to
 [1,000.00]
 Plant feed / capacity
@@ -346,6 +344,15 @@ Inflation % per month
 [0.50]
 Costing date
 [] today
+Discounts & commissions
+Project discount %
+[0.00]
+Discount mitigation %
+[0.00]
+Dealer / agent %
+[0.00]
+Default cost source
+[— select —]
 Project Information
 Project Name
 [Fixture]
@@ -396,18 +403,6 @@ ARS
 [1000]
 BRL
 [5.8]
-Default Margins & Settings
-Dealer/Agent % and Discount Mitigation % are set here and applied uniformly to all items. Margin and Contingency are editable per item.
-💡 How Discounts Work:
-Discount Mitigation % (here) = Added to your margin calculation to build in buffer for expected discounts
-Discount % (per item in Costing) = Actual discount offered to customer, applied after sell price
-Example: With 5% mitigation built in, you can give a 5% discount and still hit your target margin!
-Dealer / Agent %
-[0.00] %
-Discount Mitigation %
-[0.00] %
-Default Source
-[— select —]
 💾 Save & Restore
 ▶ 💾 Auto-save File ○ Not connected
 Save Package 🔀 Compare Revisions
@@ -473,7 +468,6 @@ Sheet 1 ✏️
 | Total Sell Price ⇅
 | Unit SP (w/ Tax) ⇅
 | Total SP (w/ Tax) ⇅
-| Discount%
 | Cost Source ⇅
 | OPTIONS
 | [ ] |
@@ -495,7 +489,7 @@ Sheet 1 ✏️
 |
 ✏️
 18,250.48 BRL
-| 18,250.48 BRL | 22,853.10 BRL | 22,853.10 BRL | [0.00] |
+| 18,250.48 BRL | 22,853.10 BRL | 22,853.10 BRL |
 Q [Quotation]
 |
 ✓
@@ -519,7 +513,7 @@ Q [Quotation]
 |
 ✏️
 3,210.89 BRL
-| 6,421.79 BRL | 4,250.67 BRL | 8,501.34 BRL | [0.00] |
+| 6,421.79 BRL | 4,250.67 BRL | 8,501.34 BRL |
 Q [Quotation]
 |
 ✓
@@ -543,7 +537,7 @@ Q [Quotation]
 |
 ✏️
 9,495.08 BRL
-| 9,495.08 BRL | 11,889.65 BRL | 11,889.65 BRL | [0.00] |
+| 9,495.08 BRL | 11,889.65 BRL | 11,889.65 BRL |
 Q [Quotation]
 |
 ✓
@@ -562,7 +556,7 @@ L 1 └
 [500.00] [USD]
 | — ▾ |
 [0.00] %
-| 2,900.00 BRL | · | [x] ↑ via parent | [x] ↑ via parent | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
+| 2,900.00 BRL | · | [x] ↑ via parent | [x] ↑ via parent | [—] | · | ↑ parent | ↑ parent | — | ↑ parent |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -580,16 +574,16 @@ L 1 └
 [80.00] [USD]
 | — ▾ |
 [0.00] %
-| 1,392.00 BRL | · | [x] ↑ via parent | [ ] | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
+| 1,392.00 BRL | · | [x] ↑ via parent | [ ] | [—] | · | ↑ parent | ↑ parent | — | ↑ parent |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS — SHEET 1 | 14,732.00 BRL | 23,931.17 BRL | | | | | | 34,167.35 BRL | | 43,244.09 BRL | | |
-| Outbound Freight 1 : Freight 46 — cost 1,500.00 BRL at 12.00% margin | distributed | | | | |
-| TOTAL SELL PRICE (LINES) | 34,167.35 BRL | | 34,167.35 BRL | | |
-| TOTAL SELL PRICE (WITH SALES TAXES) | 43,244.09 BRL | | |
+| TOTALS — SHEET 1 | 14,732.00 BRL | 23,931.17 BRL | | | | | | 34,167.35 BRL | | 43,244.09 BRL | |
+| Outbound Freight 1 : Freight 46 — cost 1,500.00 BRL at 12.00% margin | distributed | | | |
+| TOTAL SELL PRICE (LINES) | 34,167.35 BRL | | 34,167.35 BRL | |
+| TOTAL SELL PRICE (WITH SALES TAXES) | 43,244.09 BRL | |
 
 ===== TAB 🚢 Freight & Tariffs
 
@@ -892,6 +886,7 @@ GCS Commercial Summary
 | Contract value · EXW
 | Sheet 1 | 35,000.00 BRL
 | Contract value (rounded) | 35,000.00 BRL
+| Project discount [0.00] % | —
 | Total contract value | 35,000.00 BRL
 Currency Breakdown
 ▶
