@@ -175,6 +175,8 @@ const gcsCeil = (v, step) => (step > 0 ? Math.ceil(v / step - 1e-9) * step : v);
 // Web GCS uses each line's Source. Cost = the cost the line itself carries (leaf cost; a BOM parent's own cost),
 // multiplied through its parents' quantities, so the parts add up to the tab's line cost.
 const GCS_CONFIDENCE_COLORS = { Quotation: '#16a34a', Pricelist: '#2563eb', 'Project Cost': '#7c3aed', EQD: '#0891b2', 'Item Cost Use Guidance': '#f59e0b', Estimate: '#9ca3af', '': '#e2e8f0' };
+// Source weights (PCW SOURCE_SCORE): Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, none 0
+const gcsSourceWeight = src => (SOURCE_SCORE[src || ''] ?? 3);
 const gcsConfidenceLabel = src => (src ? (src === 'Item Cost Use Guidance' ? 'ICUG' : src) : 'No source');
 const gcsConfidenceMix = roots => {
   const by = new Map();
@@ -190,8 +192,11 @@ const gcsConfidenceMix = roots => {
   const total = [...by.values()].reduce((s, v) => s + v, 0);
   const order = SOURCES.filter(x => x !== '').concat(['']);
   const parts = [...by.entries()].sort((a, b) => (order.indexOf(a[0]) === -1 ? 99 : order.indexOf(a[0])) - (order.indexOf(b[0]) === -1 ? 99 : order.indexOf(b[0])))
-    .map(([source, cost]) => ({ source, label: gcsConfidenceLabel(source), cost, pct: total > 0 ? cost / total * 100 : 0, color: GCS_CONFIDENCE_COLORS[source] || '#64748b' }));
-  return { total, parts };
+    .map(([source, cost]) => ({ source, label: gcsConfidenceLabel(source), cost, pct: total > 0 ? cost / total * 100 : 0, color: GCS_CONFIDENCE_COLORS[source] || '#64748b', weight: gcsSourceWeight(source) }));
+  // PCW rule: weighted average of the source scores (SOURCE_SCORE, 0-5) by cost; level 1-5 = Very Low..Very High
+  const score = total > 0 ? parts.reduce((s, p) => s + p.cost * p.weight, 0) / total : null;
+  const level = score === null ? 0 : Math.min(5, Math.max(1, Math.round(score)));
+  return { total, parts, score, rate: score === null ? null : score / 5 * 100, level, label: level ? CONF_LABEL[level] : '', color: level ? CONF_COLOR[level] : '#94a3b8' };
 };
 const gcsConfidenceMerge = mixes => {
   const by = new Map(); (mixes || []).forEach(m => (m && m.parts || []).forEach(p => by.set(p.source, (by.get(p.source) || 0) + p.cost)));

@@ -1,4 +1,4 @@
-// Costing confidence strip (share of line cost by Source) in Tab settings and on Summary.
+// Costing confidence: cost-weighted source score (PCW SOURCE_SCORE) per tab and project, in Tab settings, Summary and header.
 // Usage: node test/confidence.js <built.html>
 const fs = require('fs'); const { launch, openApp } = require('./harness');
 const html = process.argv[2];
@@ -14,19 +14,21 @@ st.items = [L('Q', 'main', { unitCost: 1000, source: 'Quotation' }), L('P', 'mai
   const b = await launch(); const { page, errors } = await openApp(b, html, JSON.stringify(st));
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForSelector('[data-cell="Q-partNo"]');
   const parts = sel => page.$$eval(`${sel} [data-conf-part]`, els => Object.fromEntries(els.map(e => [e.getAttribute('data-conf-part'), +e.getAttribute('data-conf-pct')])));
-  const t1 = await parts('[data-gcs=tab-settings] [data-gcs-confidence="tab"]');
-  // total 1000 + 3000 + (500+250)*2 = 5500
-  ok('tab strip: Quotation 18.2%, Project Cost 54.5%, Estimate 18.2%, no source 9.1% (BOM children × parent qty)', Math.abs(t1.Quotation - 18.2) < 0.1 && Math.abs(t1['Project Cost'] - 54.5) < 0.1 && Math.abs(t1.Estimate - 18.2) < 0.1 && Math.abs(t1['No source'] - 9.1) < 0.1, JSON.stringify(t1));
-  const legend = await page.$eval('[data-gcs=tab-settings]', e => e.innerText.replace(/\s+/g, ' '));
-  ok('tab settings bar shows the two largest shares', /Confidence\s*Project Cost 55%\s*·\s*Quotation 18%/.test(legend), legend.slice(legend.indexOf('Confidence'), legend.indexOf('Confidence') + 80));
-  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '-tab.png', clip: { x: 0, y: 130, width: 1600, height: 140 } });
+  const rate = sel => page.$eval(sel, e => ({ rate: +e.getAttribute('data-conf-rate'), label: e.getAttribute('data-conf-label'), tip: e.title }));
+  const t1 = await rate('[data-gcs=tab-settings] [data-gcs-confidence="tab"]');
+  // cost 5,500: Quotation 1,000 (5) + Project Cost 3,000 (3) + Estimate 1,000 (2) + no source 500 (0) = 2.909 / 5
+  ok('tab 1 rate = cost-weighted source score 58.2%, Medium', Math.abs(t1.rate - 2.90909 / 5 * 100) < 0.05 && t1.label === 'Medium', JSON.stringify(t1).slice(0, 160));
+  ok('tooltip explains the weights and shares', /Quotation \(score 5\): 18\.18%/.test(t1.tip) && /No source \(score 0\)/.test(t1.tip), t1.tip);
+  if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '-tab.png', clip: { x: 0, y: 0, width: 1600, height: 270 } });
   await page.click('text=Plant Section 2'); await page.waitForSelector('[data-cell="X-partNo"]'); await page.waitForTimeout(200);
-  const t2 = await parts('[data-gcs=tab-settings] [data-gcs-confidence="tab"]');
-  ok('tab 2 strip is its own (EQD 100%)', Object.keys(t2).length === 1 && t2.EQD === 100, JSON.stringify(t2));
+  const t2 = await rate('[data-gcs=tab-settings] [data-gcs-confidence="tab"]');
+  ok('tab 2 is its own (EQD only: 60%, Medium)', t2.rate === 60 && t2.label === 'Medium', JSON.stringify(t2).slice(0, 80));
+  const hdr = await page.evaluate(() => [...document.querySelectorAll('span')].find(e => e.textContent === 'Cost Confidence:').parentElement.innerText);
+  ok('header Cost Confidence uses the same project score (Medium)', /Medium/.test(hdr), hdr);
   await page.click('.pcw-nav .pcw-tab >> text=Summary'); await page.waitForSelector('[data-gcs=confidence]');
-  const proj = await parts('[data-gcs=confidence] [data-gcs-confidence="__project"]');
+  const proj = await rate('[data-gcs=confidence] [data-gcs-confidence="__project"]');
   const sumText = await page.$eval('[data-gcs=confidence]', e => e.innerText.replace(/\s+/g, ' '));
-  ok('Summary lists each tab and the project mix (5,600 total)', /Plant Section 1/.test(sumText) && /Plant Section 2/.test(sumText) && Math.abs(proj.EQD - 100 / 56) < 0.05, JSON.stringify(proj) + ' · ' + sumText.slice(0, 200));
+  ok('Summary: each tab and the project (16,300 / 5,600 = 2.911 → 58.2%)', /Plant Section 1/.test(sumText) && /Plant Section 2/.test(sumText) && Math.abs(proj.rate - 16300 / 5600 / 5 * 100) < 0.05, proj.rate + ' · ' + sumText.slice(0, 220));
   if (process.env.SHOT) { const el = await page.$('[data-gcs=confidence]'); await el.screenshot({ path: process.env.SHOT + '-summary.png' }); }
   ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   await b.close();

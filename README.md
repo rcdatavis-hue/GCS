@@ -45,10 +45,15 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip, row shading (13 checks).
 - `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
 - `test/eqd-ui.js dist/index.html <feed with EQD sheet.xlsx>`: EQD picker, scaling rule, clear, CNY conversion, EQD Search (12 checks).
-- `test/confidence.js dist/index.html`: confidence mix per tab and project (5 checks).
+- `test/confidence.js dist/index.html`: confidence score per tab, project and header (6 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.17 · 2026-11-19: costing confidence is a weighted score again, as in the PCW. Each source has a score out of 5
+  (`SOURCE_SCORE`: Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, none 0); a tab's or the project's
+  rate = cost-weighted average ÷ 5, level Very Low..Very High (`gcsConfidenceMix` score / rate / level). Tab settings
+  show a small gauge + level + rate; Summary lists each tab and the project with the source shares; the header Cost
+  Confidence uses the same project score (included tabs, inflation/scaling-adjusted cost). `test/confidence.js` 6 checks.
 - v0.16 · 2026-11-19: costing confidence strip (replaces the Excel per-section pie). `gcsConfidenceMix` splits each tab's
   line cost by Source (leaf costs and BOM parents' own cost, multiplied through parent quantities); shown as a 100%
   stacked strip with the two largest shares in the Tab settings bar, and per tab + project in the Summary's GCS

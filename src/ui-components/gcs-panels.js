@@ -12,19 +12,19 @@ var gcsBandShort = band => band.startsWith('LOW') ? 'LOW' : band.startsWith('ON'
 var gcsPctInput = (value, onChange, disabled, title, width) => gcsH(NumInput, { className: "pcw-input pcw-mono text-xs", style: { width: width || 64, textAlign: 'right', padding: '3px 6px' }, value: value, min: 0, max: 100, isPercent: true, disabled, title,
   onChange: v => { if (!disabled && Number(v) !== Number(value)) onChange(Number(v) || 0); } });
 
-// ── Costing confidence strip: 100% stacked bar of line cost by Source (replaces Excel's per-section pie) ──
+// ── Costing confidence (PCW rule): cost-weighted score of the line sources → rate % and Very Low..Very High ──
+var gcsConfTip = (mix, ccy) => 'Costing confidence: ' + mix.label + ' (' + fp(mix.rate) + ')\nWeighted by line cost; source scores out of 5:\n'
+  + mix.parts.map(p => `${p.label} (score ${p.weight}): ${fp(p.pct)} of cost, ${gcsMoney(p.cost, ccy)}`).join('\n');
 var GcsConfidenceStrip = function GcsConfidenceStrip({ mix, width, height, legend, ccy, id }) {
   if (!mix || !(mix.total > 0)) return gcsH("span", { style: { fontSize: 10.5, color: '#94a3b8' } }, 'no cost yet');
-  var tip = 'Costing confidence (share of line cost by source)\n' + mix.parts.map(p => `${p.label}: ${fp(p.pct)} (${gcsMoney(p.cost, ccy)})`).join('\n');
-  var bar = gcsH("div", { title: tip, "data-gcs-confidence": id || '', style: { display: 'flex', width: width || 140, height: height || 8, borderRadius: 99, overflow: 'hidden', background: '#e2e8f0', flexShrink: 0 } },
-    mix.parts.map(p => gcsH("div", { key: p.source, "data-conf-part": p.label, "data-conf-pct": p.pct.toFixed(1), title: `${p.label}: ${fp(p.pct)} (${gcsMoney(p.cost, ccy)})`,
-      style: { width: p.pct + '%', background: p.color, backgroundImage: p.source === '' ? 'repeating-linear-gradient(45deg, transparent 0 3px, rgba(100,116,139,.35) 3px 5px)' : undefined } })));
-  if (!legend) return bar;
-  var top = legend === 'short' ? mix.parts.slice().sort((a, b) => b.pct - a.pct).slice(0, 2) : mix.parts;
-  return gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }, title: tip }, bar,
-    gcsH("span", { style: { fontSize: 10.5, color: '#475569', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
-      top.map((p, i) => gcsH(React.Fragment, { key: p.source }, i ? ' \u00B7 ' : '', gcsH("span", { style: { display: 'inline-block', width: 7, height: 7, borderRadius: 2, background: p.color, marginRight: 3, verticalAlign: 'middle' } }), `${p.label} ${Math.round(p.pct)}%`)),
-      legend === 'short' && mix.parts.length > 2 ? ` \u00B7 +${mix.parts.length - 2}` : ''));
+  var tip = gcsConfTip(mix, ccy);
+  return gcsH("span", { title: tip, "data-gcs-confidence": id || '', "data-conf-rate": mix.rate.toFixed(1), "data-conf-label": mix.label, style: { display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0 } },
+    gcsH("span", { style: { display: 'inline-block', width: width || 80, height: height || 7, borderRadius: 99, background: '#e2e8f0', overflow: 'hidden', flexShrink: 0 } },
+      gcsH("span", { style: { display: 'block', width: Math.max(0, Math.min(100, mix.rate)) + '%', height: '100%', background: mix.color } })),
+    gcsH("span", { style: { fontSize: 10.5, fontWeight: 700, padding: '1px 6px', borderRadius: 4, color: '#fff', background: mix.color, whiteSpace: 'nowrap' } }, mix.label),
+    gcsH("span", { className: "pcw-mono", style: { fontSize: 10.5, color: '#475569' } }, fp(mix.rate)),
+    legend === 'full' ? gcsH("span", { style: { fontSize: 10.5, color: '#64748b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } },
+      mix.parts.map((p, k) => gcsH(React.Fragment, { key: p.source }, k ? ' \u00B7 ' : '', gcsH("span", { "data-conf-part": p.label, "data-conf-pct": p.pct.toFixed(1), style: { display: 'inline-block', width: 7, height: 7, borderRadius: 2, background: p.color, marginRight: 3, verticalAlign: 'middle' } }), `${p.label} ${Math.round(p.pct)}%`))) : null);
 };
 
 // ── Tab settings: shown above the costing table for the active tab ──
@@ -46,7 +46,7 @@ var GcsTabSettings = memo(function GcsTabSettings({ sheet, setCostingSheets, loc
       summ && summ.lineCount > 0 ? gcsH(React.Fragment, null,
         gcsH("span", { style: { marginLeft: 'auto', fontSize: 11, color: '#475569' } }, "COGS ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.cogs)), " · Sales ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.sales, sellCcy)), " · EBITDA ", gcsH("b", { className: "pcw-mono", style: { color: gcsBandColor(band) } }, fp(summ.ebitdaPct))),
         summ.target !== null ? chip(`${gcsBandShort(band)} vs ${fp(summ.target)}`, '#fff', gcsBandColor(band)) : chip('No segment', '#92400e', '#fef3c7'),
-        gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 4 } }, gcsH("span", { style: { fontSize: 10.5, color: '#64748b' } }, 'Confidence'), gcsH(GcsConfidenceStrip, { mix: summ.confidence, width: 110, legend: 'short', ccy: sellCcy, id: 'tab' }))) : null),
+        gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 4 } }, gcsH("span", { style: { fontSize: 10.5, color: '#64748b' } }, 'Confidence'), gcsH(GcsConfidenceStrip, { mix: summ.confidence, width: 70, ccy: sellCcy, id: 'tab' }))) : null),
     open && gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(200px,1fr) minmax(320px,1.6fr) minmax(260px,1.3fr)', gap: 16, marginTop: 10 } },
       // Column 1: type, segment, default level, discount
       gcsH("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
@@ -147,12 +147,11 @@ var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj }
           td(t.target === null ? '—' : fp(t.target), { color: '#64748b' }), td(gcsBandShort(t.band), { left: true, mono: false, color: gcsBandColor(t.band), bold: true }),
           td(gcsMoney(t.price), { bold: true }), td(t.discount ? '−' + gcsMoney(t.discount) + ' (' + fp(t.discountPct) + ')' : '—', { color: '#64748b' }))))),
       gcsH("div", { "data-gcs": "confidence", style: { marginBottom: 14 } },
-        gcsH("div", { style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 6px' } }, 'Costing confidence (share of line cost by source)'),
-        gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(120px,max-content) 240px 1fr', gap: '5px 12px', alignItems: 'center', padding: '0 8px' } },
+        gcsH("div", { style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 6px' }, title: 'Cost-weighted average of the line sources. Scores out of 5: Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, no source 0.' }, 'Costing confidence (cost-weighted source score: Quotation 5 \u00B7 Pricelist 4 \u00B7 Project Cost / EQD / ICUG 3 \u00B7 Estimate 2 \u00B7 none 0)'),
+        gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(120px,max-content) 1fr', gap: '5px 12px', alignItems: 'center', padding: '0 8px' } },
           shown.concat([{ id: '__project', name: 'Project (included tabs)', confidence: P.confidence, include: true, _project: true }]).map(t => gcsH(React.Fragment, { key: t.id },
             gcsH("span", { style: { fontSize: 12, fontWeight: t._project ? 700 : 600, opacity: t.include ? 1 : 0.55 } }, t.name),
-            gcsH(GcsConfidenceStrip, { mix: t.confidence, width: 240, height: 10, ccy, id: t.id }),
-            gcsH("span", { style: { fontSize: 11, color: '#475569', opacity: t.include ? 1 : 0.55 } }, t.confidence && t.confidence.total > 0 ? t.confidence.parts.map(p => `${p.label} ${fp(p.pct)}`).join(' \u00B7 ') : ''))))),
+            gcsH(GcsConfidenceStrip, { mix: t.confidence, width: 160, height: 9, ccy, id: t.id, legend: 'full' }))))),
       gcsH("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 } },
         gcsH("table", { style: { width: '100%', borderCollapse: 'collapse', alignSelf: 'start' } }, gcsH("tbody", null,
           gcsH("tr", null, gcsH("td", { colSpan: 3, style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 4px' } }, 'Project P&L (Excel GCS definitions)')),

@@ -441,8 +441,7 @@ No approvals recorded yet. Click Approve & Lock to create the first entry.
 
 Sheet 1 ✏️
 + Add Tab SCM Search EQD Search
-▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 5,483.69 · Sales 7,415.95 GBP · EBITDA 6.06% No segment Confidence
-Quotation 100%
+▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 5,483.69 · Sales 7,415.95 GBP · EBITDA 6.06% No segment Confidence Very High 100.00%
 🎉 All lines on Sheet 1 ready to quote! — review 1 validation concern before approving 100 %
 ＋ Add Item + Add Section ⚡ Quickest Lead 💰 Lowest Cost
 📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
@@ -641,10 +640,8 @@ GBP · EBITDA 6.06%
 GCS Commercial Summary
 | Tab | Type | COGS | Sales | Contribution | EBITDA | EBITDA % | Target | Band | Price (rounded) | Discount
 | Sheet 1 | Section | 5,483.69 | 7,415.95 | 1,932.26 | 449.07 | 6.06% | — | — | 8,000.00 | —
-Costing confidence (share of line cost by source)
-Sheet 1
-Quotation 100.00% Project (included tabs)
-Quotation 100.00%
+Costing confidence (cost-weighted source score: Quotation 5 · Pricelist 4 · Project Cost / EQD / ICUG 3 · Estimate 2 · none 0)
+Sheet 1 Very High 100.00% Quotation 100% Project (included tabs) Very High 100.00% Quotation 100%
 | Project P&L (Excel GCS definitions)
 | Sales (sections + included options) | 7,415.95 GBP | 100.00%
 | Cost of goods (incl. provisions) | 5,483.69 GBP | 73.94%
