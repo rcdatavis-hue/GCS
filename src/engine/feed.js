@@ -119,6 +119,35 @@ purchaseOrders: {
  leadTime:     ['lead time','lead time (days)','leadtime','delivery days','lead days','vendor lead time'],
  }
 },
+eqd: {
+ // GCS: Equipment Quotations Database (SharePoint list on CrownSales), added to the feed with the GCS workbook's query
+ sheetMatch: ['equipment quotations','eqd','spquotedb'],
+ fields: {
+ id:             ['id'],
+ equipment:      ['equipment name'],
+ vendor:         ['vendor'],
+ price:          ['price'],
+ currency:       ['currency'],
+ quoteNo:        ['quote number'],
+ vendorUrl:      ['linkvendorurl','link vendor url'],
+ quoteDate:      ['quote date'],
+ material:       ['material'],
+ size:           ['plantrate-diameter','plant rate-diameter'],
+ sizeUnits:      ['plantrate(units)','plant rate (units)'],
+ segment:        ['segment'],
+ category:       ['category'],
+ sap:            ['sap'],
+ sapDescription: ['sapdescription','sap description'],
+ description:    ['description'],
+ modelDrawing:   ['model-drawing'],
+ refDrawing:     ['reference drawing'],
+ modelNo:        ['model #'],
+ refDwgPrefix:   ['refdwgprefix'],
+ drawingUrl:     ['refdwglink','reference dwg link'],
+ bidOffice:      ['bidoffice','bid office'],
+ deliveryWks:    ['delivery (wks)'],
+ }
+},
 currency: {
  sheetMatch: ['currency conversion','currency','fx rates','exchange rates'],
  fields: {
@@ -511,6 +540,7 @@ async function buildPartIndex() {
 }
 
 const _gcsLatestIdx = new WeakMap();
+const _gcsEqdIdx = new WeakMap();
 function gcsLatestCostIndex(rows, status, docKey) {
  let m = _gcsLatestIdx.get(rows);
  if (m) return m;
@@ -1053,6 +1083,29 @@ return {
  if (po) (gcsLatestCostIndex(po, 'Purchase Order', 'poNo').byBu.get(pn) || []).forEach(take);
  if (pq) (gcsLatestCostIndex(pq, 'Purchase Quote', 'docNum').byBu.get(pn) || []).forEach(take);
  return [...best.values()].sort((x, y) => y.date.localeCompare(x.date) || x.bu.localeCompare(y.bu));
+ },
+
+ // GCS: Liquids quotes from the feed's EQD sheet, normalised (null when the feed has no EQD sheet).
+ async getEqd() {
+ const rows = await loadSheet('eqd', false);
+ if (!rows) return null;
+ if (_gcsEqdIdx.has(rows)) return _gcsEqdIdx.get(rows);
+ const txt = v => (v === undefined || v === null ? '' : String(v).trim());
+ const records = [];
+ for (const r of rows) {
+  if (txt(r.segment).toLowerCase() !== GCS_EQD_SEGMENT.toLowerCase()) continue;
+  const price = parsePrice(r.price);
+  if (!txt(r.equipment) || !(price > 0)) continue;
+  const sizeRaw = r.size;
+  records.push({ id: r.id ?? null, equipment: txt(r.equipment), material: txt(r.material), vendor: txt(r.vendor),
+   size: sizeRaw === undefined || sizeRaw === null || sizeRaw === '' ? '' : (isNaN(Number(sizeRaw)) ? txt(sizeRaw) : Number(sizeRaw)), sizeUnits: txt(r.sizeUnits),
+   price, ccy: gcsEqdCcy(r.currency), date: fmtDate(r.quoteDate) || '', quoteNo: txt(r.quoteNo), vendorUrl: txt(r.vendorUrl),
+   sap: txt(r.sap), description: txt(r.sapDescription) || txt(r.description), drawing: txt(r.modelDrawing) || txt(r.refDrawing) || txt(r.modelNo) || txt(r.refDwgPrefix),
+   drawingUrl: txt(r.drawingUrl), bidOffice: normDB(r.bidOffice), category: txt(r.category), deliveryWks: txt(r.deliveryWks) });
+ }
+ const out = { records, total: rows.length };
+ _gcsEqdIdx.set(rows, out);
+ return out;
  },
 
  // Tests only: put parsed sheet rows in the cache (no feed file needed).

@@ -13,7 +13,7 @@ function gcsState() {
   st.costingSheets = [{ id: 'main', name: 'Plant Section 1', segment: 'Liquids (Refining, Biodiesel, Oleochemicals)', provisions: { startupRisk: 0, fcaPacking: 0, c5Duty: 0, h1Duty: 0 } },
                       { id: 'opt', name: 'Option A', type: 'option', include: false, provisions: { startupRisk: 0, fcaPacking: 0, c5Duty: 0, h1Duty: 0 } }];
   st.items = [
-    { id: 'L1', type: 'item', parentId: null, sheetId: 'main', partNumber: 'P1', description: 'Line 1', supplier: 'S', qty: 2, unitCost: 1000, ccy: 'USD', source: 'Quotation', margin: 0, discount: 0, leadTime: 5 },
+    { id: 'L1', type: 'item', parentId: null, sheetId: 'main', eqd: { equipment: 'Pump' }, partNumber: 'P1', description: 'Line 1', supplier: 'S', qty: 2, unitCost: 1000, ccy: 'USD', source: 'Quotation', margin: 0, discount: 0, leadTime: 5 },
     { id: 'L2', type: 'item', parentId: null, sheetId: 'opt', partNumber: 'P2', description: 'Opt 1', supplier: 'S', qty: 1, unitCost: 520, ccy: 'USD', source: 'Quotation', margin: 0, discount: 0, leadTime: 5 },
   ];
   return st;
@@ -50,7 +50,7 @@ const headerTotal = page => page.$eval('.pcw-header-total', e => e.innerText).th
   ok('reset returns to automatic 6%', Math.abs(await tabSales(page) - 2000 * 1.06 / 0.7) < 0.01, await tabSales(page));
   await page.focus('[data-cell="L1-size"]'); await page.waitForTimeout(120); await page.keyboard.press('Control+A'); await page.keyboard.type('100'); await page.keyboard.press('Tab'); await page.waitForTimeout(300);
   const scal = Math.pow(400 / 100, 0.6);
-  ok('size 100 with plant feed 400 gives scaling (4)^0.6', Math.abs(await tabSales(page) - 2000 * scal * 1.06 / 0.7) < 0.01, `${await tabSales(page)} vs ${2000 * scal * 1.06 / 0.7}`);
+  ok('size 100 with plant feed 400 gives scaling (4)^0.6 (EQD line)', Math.abs(await tabSales(page) - 2000 * scal * 1.06 / 0.7) < 0.01, `${await tabSales(page)} vs ${2000 * scal * 1.06 / 0.7}`);
   // ── 3. discount, options, contract value ──
   const salesNow = await tabSales(page);
   const discInput = page.locator('[data-gcs=tab-settings] input[placeholder]').first();

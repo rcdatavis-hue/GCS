@@ -81,7 +81,7 @@ function app(P) {
       provisions: { startupRisk: t.prov.su * 100, fcaPacking: t.prov.fca * 100, c5Duty: t.prov.c5 * 100, h1Duty: t.prov.h1 * 100 } };
   });
   const items = P.lines.map((l, i) => ({ id: 'x' + i, type: 'item', parentId: null, sheetId: l.tab, unitCost: l.cost, ccy: l.ccy, qty: l.qty,
-    markupLevel: l.useDefault ? undefined : l.level, margin: 0, costDate: l.date, sizeCapacity: l.size, subCat: l.sub,
+    markupLevel: l.useDefault ? undefined : l.level, margin: 0, costDate: l.date, sizeCapacity: l.size, ...(l.size > 0 ? { eqd: { equipment: 'EQ' } } : {}), subCat: l.sub,
     category: l.sub ? l.sub[0] : '', source: 'Quotation', discount: 0 }));
   const proj = { sellCcy: 'USD', rates: { ...RATES }, plantFeed: P.plantFeed, costingDate: P.costingDate, inflationPerMonth: 0.5,
     scalingExponent: 0.6, mAndE: P.mE * 100, sAndAExpense: P.sA * 100, gcsDiscount: P.discount * 100, roundTo: 1000, bu: 'CIW', defaultDealer: 0, discountMitigation: 0 };

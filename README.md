@@ -44,9 +44,25 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours, cost date default, category codes (14 checks).
 - `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip, row shading (13 checks).
 - `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
+- `test/eqd-ui.js dist/index.html <feed with EQD sheet.xlsx>`: EQD picker, scaling rule, clear, CNY conversion, EQD Search (12 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.14 · 2026-11-19: EQD (Equipment Quotations Database) for Liquids, replacing the Excel macros
+  modUnifiedEQDLookup / modLiquidsEQDProduction.
+  - Feed: new sheet type `eqd` (sheet named EQD / "Equipment Quotations…" / SPQuoteDB) with the SharePoint list's
+    columns; `DataService.getEqd()` returns Liquids quotes with a price, normalised (currency codes, dates, size,
+    description = SAPDescription or Description, drawing = Model-Drawing / Reference Drawing / Model # / RefDwgPrefix).
+  - Engine (gcs.js): `gcsEqdQuery` / `gcsEqdLatest` (Excel exact match on equipment, material, size, vendor; latest
+    quote date), `gcsEqdOptions` (cascading lists), `gcsEqdPrice` (currencies the app lacks, e.g. CNY / JPY, convert
+    to USD at the project rates), `gcsEqdPatch` (cost, currency, quote date → cost date, SAP item, description,
+    drawing, vendor, size, source EQD, cost source EQD + bid office, snapshot of the line before) and
+    `gcsEqdClearPatch` (restores it). Latest-cost autofill and refresh never overwrite an EQD line.
+  - **Scaling now only applies automatically to EQD lines** (Excel rule); other lines are 1.00× unless typed.
+  - Screens: EQD column (equipment · material · size · vendor picker with the matching quotes and links to the
+    vendor quote and drawing; Clear EQD), shown with Scale × / Size for Liquids segments; "EQD Search" panel next
+    to SCM Search adds chosen quotes as lines to a tab / position. Source list gains "EQD".
+  - Tests: `test/eqd-ui.js` (12 checks, real EQD export); excel-parity and gcs-ui mark sized lines as EQD.
 - v0.13 · 2026-11-19: discounts easier to find.
   - Setup: "Discounts & commissions" group in the GCS Costing Method card (project discount %, discount mitigation %,
     dealer / agent %, default cost source). The PCW "Default Margins & Settings" card and its per-item

@@ -6,7 +6,7 @@ const CURRENCIES   = ["USD","GBP","EUR","ARS","BRL"];
 const BE_EMPTY_DEF = {margin:'',contingency:'',discount:'',tariff:'',unitCost:'',supplier:'',ccy:'',source:'',leadTime:'',imported:'',afrmm:''};
 const BZ_EMPTY_DEF = {ncm:'',ii:'',ipi:'',pis:'',cofins:'',icmsBase:'',icms:''};
 const BUS          = ["CIW","ECL","CIT","CIA"];
-const SOURCES      = ["","Quotation","Pricelist","Project Cost","Item Cost Use Guidance","Estimate"];
+const SOURCES      = ["","Quotation","Pricelist","Project Cost","EQD","Item Cost Use Guidance","Estimate"];
 const INCOTERMS    = ["EXW","FCA","FAS","FOB","CFR","CIF","CPT","CIP","DAP","DPU","DDP"];
 const DEF_RATES    = {USD:1,GBP:0.79,EUR:0.92,ARS:1000,BRL:5.80};
 const uid          = () => Math.random().toString(36).slice(2,9);
@@ -60,7 +60,7 @@ if (southSoutheast.includes(origin.region) && others.includes(dest.region)) {
 return 12; // All other interstate operations
 };
 
-const SOURCE_SCORE = {"":0,Quotation:5,Pricelist:4,"Project Cost":3,"Item Cost Use Guidance":3,Estimate:2};
+const SOURCE_SCORE = {"":0,Quotation:5,Pricelist:4,"Project Cost":3,EQD:3,"Item Cost Use Guidance":3,Estimate:2};
 
 // Salesforce object type threshold
 const SF_QUOTE_THRESHOLD = 75000; // USD — quotes >= this should be Opportunities, below = Cases

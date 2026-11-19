@@ -185,15 +185,15 @@ var GcsCostSourceCell = function GcsCostSourceCell({ n, bu, locked, updItemMerge
     setOpts(null);
     try { setOpts(DataService.isConnected() && n.partNumber ? await DataService.getLatestCostByBU(n.partNumber) : []); } catch (e) { setOpts([]); }
   };
-  var pick = rec => { var p = gcsCostFillPatch(n, rec, null, { force: true }); if (p) updItemMerge(n.id, p); setOpen(null); };
+  var pick = rec => { var p = gcsCostFillPatch(n, rec, null, { force: true, explicit: true }); if (p) updItemMerge(n.id, p); setOpen(null); };
   var tip = pv ? [`Cost source location: ${pv.location || 'unknown BU'}`, pv.type ? `${pv.type}${pv.doc ? ' ' + pv.doc : ''}` : '', pv.date ? `Dated ${pv.date}` : '', pv.supplier ? `Supplier: ${pv.supplier}` : '', pv.qty ? `Qty on document: ${pv.qty}` : '', 'Costs in the feed are in USD. Click to choose another business unit.'].filter(Boolean).join('\n')
     : (n.partNumber ? 'Typed or no automatic cost. Click to take the latest PO/PQ cost from a business unit.' : 'Enter a part number to choose a cost source');
   var short = { 'Purchase Order': 'PO', 'Purchase Quote': 'PQ' };
   return h("td", { className: "py-1 px-1 text-center", "data-cell": `${n.id}-costLoc` },
     h("button", { type: "button", ref: btnRef, title: tip, "data-cost-loc": pv ? pv.location : '', disabled: !n.partNumber, onClick: toggle,
       style: { display: 'inline-flex', alignItems: 'center', gap: 3, border: 'none', background: 'none', cursor: n.partNumber ? 'pointer' : 'default', padding: 0 } },
-      pv ? h("span", { style: { fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 4, background: other ? '#fef3c7' : '#ede9fe', color: other ? '#92400e' : '#5b21b6' } }, pv.location || '?') : h("span", { style: { color: '#cbd5e1', fontSize: 10 } }, "—"),
-      pv && pv.short ? h("span", { style: { fontSize: 9, color: '#64748b', fontWeight: 600 } }, pv.short) : null,
+      pv ? h("span", { style: { fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 4, background: other ? '#fef3c7' : '#ede9fe', color: other ? '#92400e' : '#5b21b6' } }, pv.location || pv.short || '?') : h("span", { style: { color: '#cbd5e1', fontSize: 10 } }, "—"),
+      pv && pv.short && pv.location ? h("span", { style: { fontSize: 9, color: '#64748b', fontWeight: 600 } }, pv.short) : null,
       n.partNumber ? h("span", { style: { fontSize: 8, color: '#94a3b8' } }, "▾") : null),
     open ? ReactDOM.createPortal(h("div", { ref: popRef, "data-cost-picker": n.id, style: { position: 'fixed', top: open.top, left: open.left, width: 390, zIndex: 1200, background: 'var(--pcw-surface, #fff)', border: '1px solid var(--pcw-border, #e2e8f0)', borderRadius: 8, boxShadow: '0 12px 30px rgba(0,0,0,.25)', padding: 8, textAlign: 'left', fontSize: 12 } },
       h("div", { style: { fontWeight: 700, marginBottom: 6 } }, `Cost source location — ${n.partNumber}`),

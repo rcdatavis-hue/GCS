@@ -129,7 +129,11 @@ const gcsAutoInflation = (item, proj) => {
   const rate = proj?.inflationPerMonth ?? GCS_DEFAULT_INFLATION_PER_MONTH;
   return gcsMonthsBetween(item.costDate, gcsCostingDate(proj)) * rate;   // %
 };
+// Excel rule: automatic scaling only on EQD lines (equipment chosen from the Equipment Quotations Database);
+// every other line is 1.00× unless a factor is typed.
+const gcsIsEqdLine = item => !!(item && item.eqd && item.eqd.equipment);
 const gcsAutoScaling = (item, proj) => {
+  if (!gcsIsEqdLine(item)) return 1;
   const feed = Number(proj?.plantFeed) || 0, size = Number(item.sizeCapacity) || 0;
   if (!(feed > 0) || !(size > 0)) return 1;
   return Math.pow(feed / size, proj?.scalingExponent ?? GCS_DEFAULT_SCALING_EXPONENT);
@@ -264,27 +268,29 @@ const gcsMigrateData = d => {
 // fills cost, cost date (so automatic inflation runs from it), supplier (if blank or auto-filled) and the cost
 // source location (the BU). A typed cost is never overwritten. If the part has no PO/PQ, a pricelist cost the
 // autofill wrote keeps working as before and its BU is recorded as the location.
-const GCS_COST_TYPE_SHORT = { 'Purchase Order': 'PO', 'Purchase Quote': 'PQ', Pricelist: 'PL' };
+const GCS_COST_TYPE_SHORT = { 'Purchase Order': 'PO', 'Purchase Quote': 'PQ', Pricelist: 'PL', EQD: 'EQD' };
 // Provenance is only shown while the line still holds the cost it describes (a cost changed by paste, fill or
 // find & replace then reads as typed).
 const gcsCostProvenance = item => {
   const r = item && item.costRef;
-  if (!r || !item.costLocation && !r.bu) return null;
+  if (!r || !item.costLocation && !r.bu && r.type !== 'EQD') return null;
   if (r.cost !== undefined && Math.abs((Number(item.unitCost) || 0) - Number(r.cost)) > 1e-6) return null;
-  if (r.cost !== undefined && (item.ccy || 'USD') !== 'USD') return null;
+  if (r.cost !== undefined && (item.ccy || 'USD') !== (r.ccy || 'USD')) return null;
   return { location: item.costLocation || r.bu || '', type: r.type || '', short: GCS_COST_TYPE_SHORT[r.type] || r.type || '', doc: r.doc || '', date: r.date || '', supplier: r.supplier || '', qty: r.qty };
 };
-const gcsMayAutoCost = item => !(Number(item.unitCost) > 0) || item._autoPricelist === true || (item._autoCost === true && !!gcsCostProvenance(item));
+const gcsMayAutoCost = item => !gcsIsEqdLine(item) && (!(Number(item.unitCost) > 0) || item._autoPricelist === true || (item._autoCost === true && !!gcsCostProvenance(item)));
 // r: the line as it will be after any other autofill updates; lc: DataService.getLatestCost result (or null).
 // opts: keepSupplier (quote lines keep theirs), force (bulk refresh that may overwrite typed costs),
 // clearIfNone (refresh: remove an automatic cost the feed no longer has), defaultSource.
 const gcsCostFillPatch = (r, lc, plEntry, opts = {}) => {
+  // EQD lines own their cost: only an explicit choice (the Cost Source picker) replaces it, and that ends EQD mode.
+  if (gcsIsEqdLine(r) && !opts.explicit) return null;
   if (!opts.force && !gcsMayAutoCost(r)) return null;
   if (lc && lc.unitCost > 0) {
     const cost = parseFloat(Number(lc.unitCost).toFixed(4));
     const p = { unitCost: cost, ccy: 'USD', costDate: lc.date || '', costLocation: lc.bu || '', source: 'Project Cost',
       costRef: { type: lc.status || '', doc: lc.docNo || '', date: lc.date || '', qty: lc.qty, supplier: lc.supplier || '', bu: lc.bu || '', cost },
-      _autoCost: true, _autoPricelist: false, manualSellPrice: null };
+      _autoCost: true, _autoPricelist: false, manualSellPrice: null, ...(gcsIsEqdLine(r) ? { eqd: null } : {}) };
     if (!opts.keepSupplier && lc.supplier && (!r.supplier || r._autoSupplier === true)) { p.supplier = lc.supplier; p._autoSupplier = true; }
     return p;
   }
@@ -330,3 +336,80 @@ const gcsCategoryName = code => { if (!code) return ''; const x = (code.length =
 
 // Quote-readiness bar colour by % of lines complete: red < 33, amber 33-65, light green 66-99, green 100.
 const gcsReadinessColor = pct => (pct >= 100 ? '#16a34a' : pct >= 66 ? '#65a30d' : pct >= 33 ? '#f59e0b' : '#dc2626');
+
+
+// ═══ EQD: Equipment Quotations Database (Liquids) ═════════════════════════════════════════════════════════
+// Excel macros modUnifiedEQDLookup / modLiquidsEQDProduction. Records come from the EQD sheet of the PCW feed
+// (DataService.getEqd). A line enters EQD mode when Equipment, Material, Size and Vendor match a quote; the latest
+// matching quote fills cost, currency, quote date (cost date → inflation), SAP item, description, model / drawing,
+// supplier and size; automatic scaling then applies. Clearing EQD restores what the line held before.
+const GCS_EQD_SEGMENT = 'Liquids';
+const GCS_EQD_CCY_SYMBOLS = { '$': 'USD', 'US$': 'USD', '£': 'GBP', '€': 'EUR', 'R$': 'BRL', 'RMB': 'CNY', '¥': 'CNY' };
+// "USD ($)", "U.S. Dollar (USD)", "EUR (€)", "RMB" → ISO code
+const gcsEqdCcy = raw => {
+  const s = String(raw || '').trim(); if (!s) return 'USD';
+  const up = s.toUpperCase();
+  const iso = up.match(/\b(USD|EUR|GBP|BRL|ARS|CNY|JPY|AUD|CAD|MXN|SGD|NOK|SEK|INR|CHF)\b/);
+  if (iso) return iso[1];
+  return GCS_EQD_CCY_SYMBOLS[s] || GCS_EQD_CCY_SYMBOLS[up] || (/^[A-Z]{3}$/.test(up) ? up : 'USD');
+};
+// Excel ValuesMatch: numeric if both numeric, else trimmed case-insensitive text
+const gcsEqdSame = (a, b) => {
+  const na = Number(a), nb = Number(b);
+  if (String(a ?? '').trim() !== '' && String(b ?? '').trim() !== '' && !isNaN(na) && !isNaN(nb)) return Math.abs(na - nb) < 1e-7;
+  return String(a ?? '').trim().toLowerCase() === String(b ?? '').trim().toLowerCase();
+};
+const gcsEqdSizeLabel = r => (r.size === '' || r.size === null || r.size === undefined ? '' : String(r.size) + (r.sizeUnits ? ' ' + r.sizeUnits : ''));
+// Quotes matching the selection (blank fields = any), newest first; text filters any field
+const gcsEqdQuery = (records, sel = {}) => {
+  const q = String(sel.text || '').trim().toLowerCase();
+  const out = (records || []).filter(r => (!sel.equipment || gcsEqdSame(r.equipment, sel.equipment)) && (!sel.material || gcsEqdSame(r.material, sel.material))
+    && (sel.size === undefined || sel.size === '' || sel.size === null || gcsEqdSame(r.size, sel.size)) && (!sel.vendor || gcsEqdSame(r.vendor, sel.vendor))
+    && (!q || [r.equipment, r.material, r.vendor, r.description, r.drawing, r.sap, r.quoteNo, r.category].some(v => String(v || '').toLowerCase().includes(q))));
+  return out.sort((a, b) => String(b.date).localeCompare(String(a.date)) || (Number(b.id) || 0) - (Number(a.id) || 0));
+};
+const gcsEqdLatest = (records, sel) => (sel && sel.equipment && sel.material && sel.vendor && sel.size !== '' && sel.size !== undefined ? gcsEqdQuery(records, sel)[0] || null : null);
+// Cascading choices: materials for the equipment, sizes for equipment + material, vendors for all three
+const gcsEqdOptions = (records, sel = {}) => {
+  const uniq = (arr, key) => { const m = new Map(); arr.forEach(r => { const v = r[key]; if (v === '' || v === null || v === undefined) return; const k = String(v).trim().toLowerCase(); if (!m.has(k)) m.set(k, v); }); return [...m.values()]; };
+  const byText = (a, b) => String(a).localeCompare(String(b));
+  const all = records || [];
+  const e = sel.equipment ? all.filter(r => gcsEqdSame(r.equipment, sel.equipment)) : [];
+  const em = sel.material ? e.filter(r => gcsEqdSame(r.material, sel.material)) : [];
+  const ems = sel.size !== undefined && sel.size !== '' && sel.size !== null ? em.filter(r => gcsEqdSame(r.size, sel.size)) : [];
+  return { equipment: uniq(all, 'equipment').sort(byText), material: uniq(e, 'material').sort(byText),
+    size: uniq(em, 'size').sort((a, b) => (Number(a) - Number(b)) || byText(a, b)), vendor: uniq(ems, 'vendor').sort(byText) };
+};
+// Price in an app currency: kept if the app supports it; otherwise converted to USD with the project rates
+// (per 1 USD). Returns null when there is no rate for it.
+const gcsEqdPrice = (rec, rates) => {
+  const ccy = rec.ccy || 'USD', price = Number(rec.price) || 0;
+  if (CURRENCIES.includes(ccy)) return { unitCost: price, ccy, converted: null };
+  const r = rates && Number(rates[ccy]);
+  if (!(r > 0)) return null;
+  return { unitCost: parseFloat((price / r).toFixed(4)), ccy: 'USD', converted: { from: ccy, price, rate: r } };
+};
+const GCS_EQD_PREV_FIELDS = ['partNumber', 'description', 'drawingNumber', 'supplier', 'unitCost', 'ccy', 'costDate', 'source', 'sizeCapacity', 'scalingFactor', 'costLocation', 'costRef', '_autoCost', '_autoSupplier', '_autoDescription', '_autoDrawing', '_autoPricelist'];
+const gcsEqdPatch = (item, rec, rates) => {
+  const pr = gcsEqdPrice(rec, rates);
+  if (!pr) return null;
+  const prev = item.eqd && item.eqd.prev ? item.eqd.prev : Object.fromEntries(GCS_EQD_PREV_FIELDS.map(k => [k, item[k] === undefined ? null : item[k]]));
+  return {
+    eqd: { equipment: rec.equipment, material: rec.material, size: rec.size, vendor: rec.vendor, id: rec.id ?? null, quoteNo: rec.quoteNo || '', vendorUrl: rec.vendorUrl || '',
+      drawingUrl: rec.drawingUrl || '', category: rec.category || '', sizeUnits: rec.sizeUnits || '', converted: pr.converted, prev },
+    partNumber: rec.sap ? String(rec.sap) : (item.partNumber || ''), description: rec.description || item.description || '', drawingNumber: rec.drawing || item.drawingNumber || '',
+    supplier: rec.vendor || item.supplier || '', sizeCapacity: Number(rec.size) || 0, scalingFactor: null,
+    unitCost: pr.unitCost, ccy: pr.ccy, costDate: rec.date || '', source: 'EQD', manualSellPrice: null,
+    costLocation: rec.bidOffice || '', costRef: { type: 'EQD', doc: rec.quoteNo || '', date: rec.date || '', supplier: rec.vendor || '', bu: rec.bidOffice || '', cost: pr.unitCost, ccy: pr.ccy, url: rec.vendorUrl || '' },
+    _autoCost: false, _autoPricelist: false, _autoSupplier: false, _autoDescription: !!rec.description, _autoDrawing: !!rec.drawing,
+  };
+};
+// Leave EQD mode: restore the fields the line held before it entered
+const gcsEqdClearPatch = item => {
+  const prev = (item.eqd && item.eqd.prev) || {};
+  const out = { eqd: null };
+  GCS_EQD_PREV_FIELDS.forEach(k => { out[k] = prev[k] === undefined ? null : prev[k]; });
+  ['partNumber', 'description', 'drawingNumber', 'supplier', 'source', 'costDate', 'costLocation'].forEach(k => { if (out[k] === null) out[k] = ''; });
+  if (out.unitCost === null) out.unitCost = 0; if (out.ccy === null) out.ccy = 'USD'; if (out.sizeCapacity === null) out.sizeCapacity = 0;
+  return out;
+};
