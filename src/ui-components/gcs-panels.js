@@ -123,7 +123,7 @@ var GcsProjectSettings = function GcsProjectSettings({ proj, setLockedProj }) {
       field('Dealer / agent %', 'Commission paid to a dealer or sales agent, built into every sell price: sell ÷ (1 − dealer). Set to 0 if no agent is involved.', numBox('defaultDealer', 0, { max: 100, isPercent: true })),
       field('Default cost source', 'Source pre-filled on new lines (sets the cost confidence). Autofilled costs set their own source.',
         gcsH("select", { className: "pcw-input", value: proj.source || '', disabled: locked, onChange: e => set('source', e.target.value) },
-          gcsH("option", { value: '' }, '\u2014 select \u2014'), SOURCES.filter(x => x !== '').map(x => gcsH("option", { key: x, value: x }, x))))));
+          gcsH("option", { value: '' }, '\u2014 select \u2014'), SOURCES.filter(x => x !== '' && (!GCS_HIDDEN_SOURCES.includes(x) || proj.source === x)).map(x => gcsH("option", { key: x, value: x }, x))))));
 };
 
 // ── Commercial summary (Summary tab) ──
@@ -147,7 +147,7 @@ var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj, setLockedProj }
           td(t.target === null ? '—' : fp(t.target), { color: '#64748b' }), td(gcsBandShort(t.band), { left: true, mono: false, color: gcsBandColor(t.band), bold: true }),
           td(gcsMoney(t.price), { bold: true }), td(t.discount ? '−' + gcsMoney(t.discount) + ' (' + fp(t.discountPct) + ')' : '—', { color: '#64748b' }))))),
       gcsH("div", { "data-gcs": "confidence", style: { marginBottom: 14 } },
-        gcsH("div", { style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 6px' }, title: 'Cost-weighted average of the line sources. Scores out of 5: Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, no source 0.' }, 'Costing confidence (cost-weighted source score: Quotation 5 \u00B7 Pricelist 4 \u00B7 Project Cost / EQD / ICUG 3 \u00B7 Estimate 2 \u00B7 none 0)'),
+        gcsH("div", { style: { fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', padding: '0 8px 6px' }, title: 'Cost-weighted average of the line sources. Scores out of 5: Quotation 5, Pricelist 4, Project Cost / EQD 3, Estimate 2, no source 0.' }, 'Costing confidence (cost-weighted source score: Quotation 5 \u00B7 Pricelist 4 \u00B7 Project Cost / EQD 3 \u00B7 Estimate 2 \u00B7 none 0)'),
         gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(120px,max-content) 1fr', gap: '5px 12px', alignItems: 'center', padding: '0 8px' } },
           shown.concat([{ id: '__project', name: 'Project (included tabs)', confidence: P.confidence, include: true, _project: true }]).map(t => gcsH(React.Fragment, { key: t.id },
             gcsH("span", { style: { fontSize: 12, fontWeight: t._project ? 700 : 600, opacity: t.include ? 1 : 0.55 } }, t.name),

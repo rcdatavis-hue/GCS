@@ -9,7 +9,7 @@ st.costingSheets = [{ id: 'main', name: 'Plant Section 1' }, { id: 's2', name: '
 const L = (id, sheetId, extra) => ({ id, type: 'item', parentId: null, sheetId, partNumber: id, description: id, supplier: 'S', qty: 1, unitCost: 0, ccy: 'USD', source: '', ...extra });
 st.items = [L('Q', 'main', { unitCost: 1000, source: 'Quotation' }), L('P', 'main', { unitCost: 1000, qty: 3, source: 'Project Cost' }),
   L('B', 'main', { qty: 2, source: 'Quotation' }), L('B1', 'main', { parentId: 'B', unitCost: 500, source: 'Estimate' }), L('B2', 'main', { parentId: 'B', unitCost: 250 }),
-  L('X', 's2', { unitCost: 100, source: 'EQD' })];
+  L('X', 's2', { unitCost: 100, source: 'EQD' }), L('I', 's2', { unitCost: 0, source: 'Item Cost Use Guidance' })];
 (async () => {
   const b = await launch(); const { page, errors } = await openApp(b, html, JSON.stringify(st));
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForSelector('[data-cell="Q-partNo"]');
@@ -22,6 +22,10 @@ st.items = [L('Q', 'main', { unitCost: 1000, source: 'Quotation' }), L('P', 'mai
   if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT + '-tab.png', clip: { x: 0, y: 0, width: 1600, height: 270 } });
   await page.click('text=Plant Section 2'); await page.waitForSelector('[data-cell="X-partNo"]'); await page.waitForTimeout(200);
   const t2 = await rate('[data-gcs=tab-settings] [data-gcs-confidence="tab"]');
+  const opts = id => page.$eval(`[data-cell="${id}-source"]`, e => [...e.options].map(o => o.value));
+  const oX = await opts('X'), oI = await opts('I');
+  ok('ICUG hidden from the Source list; a line already on ICUG keeps it', !oX.includes('Item Cost Use Guidance') && oX.includes('EQD') && oI.includes('Item Cost Use Guidance'), oX.join(',') + ' / ' + oI.join(','));
+  ok('no Item Cost Use Guidance estimate buttons', !(await page.$('text=Apply Est.')) && !(await page.$('text=✦ Est')));
   ok('tab 2 is its own (EQD only: 60%, Medium)', t2.rate === 60 && t2.label === 'Medium', JSON.stringify(t2).slice(0, 80));
   const hdr = await page.evaluate(() => [...document.querySelectorAll('span')].find(e => e.textContent === 'Cost Confidence:').parentElement.innerText);
   ok('header Cost Confidence uses the same project score (Medium)', /Medium/.test(hdr), hdr);

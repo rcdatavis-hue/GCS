@@ -175,6 +175,8 @@ const gcsCeil = (v, step) => (step > 0 ? Math.ceil(v / step - 1e-9) * step : v);
 // Web GCS uses each line's Source. Cost = the cost the line itself carries (leaf cost; a BOM parent's own cost),
 // multiplied through its parents' quantities, so the parts add up to the tab's line cost.
 const GCS_CONFIDENCE_COLORS = { Quotation: '#16a34a', Pricelist: '#2563eb', 'Project Cost': '#7c3aed', EQD: '#0891b2', 'Item Cost Use Guidance': '#f59e0b', Estimate: '#9ca3af', '': '#e2e8f0' };
+// Sources hidden from the GCS pick lists (aftermarket only); kept for lines that already use them
+const GCS_HIDDEN_SOURCES = ['Item Cost Use Guidance'];
 // Source weights (PCW SOURCE_SCORE): Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, none 0
 const gcsSourceWeight = src => (SOURCE_SCORE[src || ''] ?? 3);
 const gcsConfidenceLabel = src => (src ? (src === 'Item Cost Use Guidance' ? 'ICUG' : src) : 'No source');

@@ -45,10 +45,12 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip, row shading (13 checks).
 - `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
 - `test/eqd-ui.js dist/index.html <feed with EQD sheet.xlsx>`: EQD picker, scaling rule, clear, CNY conversion, EQD Search (12 checks).
-- `test/confidence.js dist/index.html`: confidence score per tab, project and header (6 checks).
+- `test/confidence.js dist/index.html`: confidence score per tab, project and header; ICUG hidden (8 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.18 · 2026-11-19: Item Cost Use Guidance hidden (aftermarket only): not offered in the Source lists (`GCS_HIDDEN_SOURCES`;
+  a line or default that already uses it keeps it), no "✦ Est" / "Apply Est." estimate buttons. `test/confidence.js` 8 checks.
 - v0.17 · 2026-11-19: costing confidence is a weighted score again, as in the PCW. Each source has a score out of 5
   (`SOURCE_SCORE`: Quotation 5, Pricelist 4, Project Cost / EQD / ICUG 3, Estimate 2, none 0); a tab's or the project's
   rate = cost-weighted average ÷ 5, level Very Low..Very High (`gcsConfidenceMix` score / rate / level). Tab settings

@@ -873,7 +873,7 @@ BRL (customer pays)
 GCS Commercial Summary
 | Tab | Type | COGS | Sales | Contribution | EBITDA | EBITDA % | Target | Band | Price (rounded) | Discount
 | Sheet 1 | Section | 24,570.43 | 34,806.61 | 10,236.18 | 3,274.86 | 9.41% | — | — | 35,000.00 | —
-Costing confidence (cost-weighted source score: Quotation 5 · Pricelist 4 · Project Cost / EQD / ICUG 3 · Estimate 2 · none 0)
+Costing confidence (cost-weighted source score: Quotation 5 · Pricelist 4 · Project Cost / EQD 3 · Estimate 2 · none 0)
 Sheet 1 Very High 100.00% Quotation 100% Project (included tabs) Very High 100.00% Quotation 100%
 | Project P&L (Excel GCS definitions)
 | Sales (sections + included options) | 34,806.61 BRL | 100.00%
