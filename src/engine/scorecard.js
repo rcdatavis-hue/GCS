@@ -21,7 +21,8 @@ const GCS_SC_MENU = {
   incoterm: { DDP: 'DDP', DAP: 'DAP', FCA: 'FCA, ExWorks', EXW: 'FCA, ExWorks' },
 };
 const GCS_SC_TIER1 = /\b(ADM|Archer[- ]Daniels|Bunge|Cargill|COFCO|LDC|Louis[- ]Dreyfus|Wilmar)\b/i;
-const GCS_SC_SLOTS = { fab: [7, 15], cpm: [19, 20], third: [24, 38] };
+// Row 15 of the Fabricated block is outside the template's subtotal (F16 = SUM(F7:F14)), so it is not used.
+const GCS_SC_SLOTS = { fab: [7, 14], cpm: [19, 20], third: [24, 38] };
 
 // ── Rigor and per-line confidence (scorecard Costing Confidence sheet) ──
 const gcsRigorOf = (source, n) => {
@@ -52,7 +53,8 @@ const gcsScorecardData = ctx => {
   const asOf = gcsCostingDate(proj);
   const lines = [];
   tree.filter(n => included.has(idx.idOf(n))).forEach(n => {
-    const cost = usd(n.totalCOGS);
+    // Landed cost (incl. inbound freight and tariffs allocated to the line), so the scorecard's COGS matches the GCS P&L
+    const cost = usd(pricing.getAlloc(n).landed);
     if (!(cost > 0)) return;
     const mix = gcsConfidenceMix([n]);
     const top = mix.parts.slice().sort((a, b) => b.cost - a.cost)[0];
@@ -167,7 +169,8 @@ const gcsBuildScorecard = async data => {
   D('E64', data.money.freightCost ? k(data.money.freightCost) : ''); D('E101', data.money.freightCost ? k(data.money.freightCost) : '');
   D('C134', data.incoterm); D('X148', data.links.salesforce); D('X150', data.links.sharepoint);
   // CashFlow: values and the section table
-  C('C9', Math.round(data.money.equipment)); C('C24', Math.round(data.money.freightSell)); C('C17', Math.round(data.money.agentCommission));
+  // C9 is the ES equipment value; the template adds the agent (C17) on top in the contract value (C25), so it is taken out here
+  C('C9', Math.round(data.money.equipment - data.money.agentCommission)); C('C24', Math.round(data.money.freightSell)); C('C17', Math.round(data.money.agentCommission));
   const pn = data.projectName;
   C('C63', `${pn} (ES Total)`); C('J63', `${pn} (CPM Total)`); C('C74', `${pn} (ES Total)`); C('J74', `${pn} (CPM Total)`);
   ['C65', 'J65', 'C75', 'J75'].forEach(r => C(r, 'Equipment'));

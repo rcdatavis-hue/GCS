@@ -46,10 +46,14 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/discounts.js dist/index.html`: discount fields in Setup and Summary, per-line discount column default (8 checks).
 - `test/eqd-ui.js dist/index.html <feed with EQD sheet.xlsx>`: EQD picker, scaling rule, clear, CNY conversion, EQD Search (12 checks).
 - `test/confidence.js dist/index.html`: confidence score per tab, project and header; ICUG hidden (8 checks).
-- `test/scorecard.js dist/index.html`: scorecard export cells, overflow grouping, LibreOffice recalculation (19 checks).
+- `test/scorecard.js dist/index.html`: scorecard export cells, overflow grouping, totals vs GCS, LibreOffice recalculation (21 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.20 · 2026-11-19: scorecard export fixes. Line costs are landed cost (inbound freight and tariffs included), so
+  the Costing Confidence total and the Dashboard cost of materials equal the GCS cost of goods. CashFlow C9 excludes
+  the agent commission (the template adds C17 on top in the contract value, which double-counted it). The Fabricated
+  block uses rows 7-14 (row 15 is outside the template's F16 subtotal). `test/scorecard.js` 21 checks.
 - v0.19 · 2026-11-19: Scorecard export ("⬇ Scorecard (.xlsx)" in the Summary's GCS card).
   - The Engineered Solutions scorecard (ES_26.13) is embedded as a blank template (`engine/scorecard-template.js`,
     built by `tools/make-scorecard-template.py` from a filled scorecard: entry cells, old cached results, links and

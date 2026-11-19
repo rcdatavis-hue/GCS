@@ -43,7 +43,7 @@ st.items = [
   ok('3rd party: 17 lines into 15 rows (14 + 1 grouping the other 3), total kept', Math.abs(thirdTotal - thirdExpect) < 0.05 && /3 further lines/.test(third[14][1]) && third[0][2] === 19890 && third[0][3] === 'PROJECT COST' && third[1][3] === 'ESTIMATE', `${thirdTotal} · ${third[14][1]} · ${third[1][3]}`);
   ok('excluded option not exported', !JSON.stringify(wb.Sheets['GCS Lines']).includes('Line X1'));
   ok('provisions: start-up risk and freight', v('Costing Confidence', 'F41') > 0 && v('Costing Confidence', 'F42') > 0, v('Costing Confidence', 'F41') + ' / ' + v('Costing Confidence', 'F42'));
-  ok('CashFlow: equipment value, CPM sell/cost, section labels', v('CashFlow', 'C9') > 300000 && v('CashFlow', 'L76') === 40000 && v('CashFlow', 'C63') === 'Test Prep Plant (ES Total)', [v('CashFlow', 'C9'), v('CashFlow', 'D76'), v('CashFlow', 'L76'), v('CashFlow', 'C63')].join(' | '));
+  ok('CashFlow: equipment value (less agent commission), CPM sell/cost, section labels', v('CashFlow', 'C9') > 300000 && Math.abs(v('CashFlow', 'C9') + v('CashFlow', 'C17') - 751000) <= 1 && v('CashFlow', 'L76') === 40000 && v('CashFlow', 'C63') === 'Test Prep Plant (ES Total)', [v('CashFlow', 'C9'), v('CashFlow', 'D76'), v('CashFlow', 'L76'), v('CashFlow', 'C63')].join(' | '));
   ok('GCS Lines sheet lists every line', XLSX.utils.sheet_to_json(wb.Sheets['GCS Lines'], { header: 1 }).filter(r => /^Plant Section 1$/.test(r[0])).length === 20);
   ok('manual fields left blank (region, relationship, contract law, approvals)', [['Dashboard', 'Q18'], ['Dashboard', 'L18'], ['Dashboard', 'C136'], ['Dashboard', 'G146']].every(([s, r]) => v(s, r) === undefined));
   // Recalculate with LibreOffice and read the Dashboard numbers driven by formulas
@@ -56,9 +56,12 @@ st.items = [
     const fab = cv('Dashboard', 'H37'), fabCost = (v('Costing Confidence', 'F7') + v('Costing Confidence', 'F8')) / 1000;
     ok('after recalculation: Dashboard material cost (fabrication, $k) = Costing Confidence total', Math.abs(fab - fabCost) < 0.01, `${fab} vs ${fabCost}`);
     ok('after recalculation: header copied to CashFlow / Costing Confidence', cv('CashFlow', 'E2') === 'Cargill Inc' && cv('Costing Confidence', 'D2') === 'Cargill Inc');
+    ok('after recalculation: Dashboard cost of materials = GCS cost of goods', Math.abs(cv('Dashboard', 'L70') * 1000 - (v('Costing Confidence', 'F7') + v('Costing Confidence', 'F8') + v('Costing Confidence', 'F19') + Array.from({ length: 15 }, (_, i) => v('Costing Confidence', 'F' + (24 + i)) || 0).reduce((a, b) => a + b, 0) + v('Costing Confidence', 'F41') + v('Costing Confidence', 'F42'))) < 1, cv('Dashboard', 'L70'));
     ok('after recalculation: Dashboard ES sale value ($k) = CashFlow equipment − IS', Math.abs(cv('Dashboard', 'C58') - (v('CashFlow', 'C9') - v('CashFlow', 'D76')) / 1000) < 0.01, cv('Dashboard', 'C58'));
     ok('after recalculation: Dashboard EBITDA computed (no errors)', typeof cv('Dashboard', 'L79') === 'number' && typeof cv('Dashboard', 'L80') === 'number', `${cv('Dashboard', 'L79')} / ${cv('Dashboard', 'L80')}`);
   } else ok('LibreOffice recalculation (skipped: soffice not found)', true);
+  const gcs = await page.evaluate(() => { const t = document.querySelector('[data-gcs=summary]').innerText; const g = re => { const m = t.match(re); return m ? parseFloat(m[1].replace(/,/g, '')) : null; }; return { cogs: g(/Cost of goods \(incl\. provisions\)\s*([\d,\.]+)/), contract: g(/Contract value \(rounded\)\s*([\d,\.]+)/) }; });
+  ok('Costing Confidence total (lines + provisions) = GCS cost of goods', Math.abs(v('Costing Confidence', 'F7') + v('Costing Confidence', 'F8') + v('Costing Confidence', 'F19') + Array.from({ length: 15 }, (_, i) => v('Costing Confidence', 'F' + (24 + i)) || 0).reduce((a, b) => a + b, 0) + v('Costing Confidence', 'F41') + v('Costing Confidence', 'F42') - gcs.cogs) < 0.05, JSON.stringify(gcs));
   ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   await b.close();
   results.forEach(r => console.log((r.pass ? 'PASS ' : 'FAIL ') + r.name + (r.detail !== undefined ? '  — ' + r.detail : '')));
