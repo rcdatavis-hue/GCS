@@ -42,10 +42,16 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
 - `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
 - `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours, cost date default, category codes (14 checks).
-- `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip (8 checks).
+- `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip, row shading (13 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.12 · 2026-11-19: row completion shading (green = cost and markup set, yellow = only one).
+  - It read the raw margin field, which is 0 for lines priced by a markup level, so such lines never turned green;
+    it now uses the same markup rule as readiness (level incl. PASS, Custom % > 0 or manual sell price), on screen and
+    in the HTML/PDF export.
+  - The setting ("Completion colour coding", Setup) is stored per app, so the PCW's choice did not carry over and
+    the GCS started with it off; it is now on unless turned off. `test/readiness.js` 13 checks.
 - v0.11 · 2026-11-19: quote readiness fixes.
   - The readiness bar counted every tab; it now describes the tab on screen (labelled with its name), from the same
     per-line rule as the row tick (`pricing.quoteReadyMap`).

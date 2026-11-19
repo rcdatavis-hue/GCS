@@ -434,7 +434,7 @@ Date Format
 CIW defaults to US date format. Language affects UI labels.
 Table Display
 [ ] Cell gridlines
-[ ] Completion colour coding
+[x] Completion colour coding
 Row density [Normal]
 ✅ Approval & Audit Log
 ▴

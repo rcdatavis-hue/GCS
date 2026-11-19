@@ -27,7 +27,20 @@ st.items = [L('A', 'main'), L('B', 's2', { markupLevel: 'PASS' }), L('C', 's2', 
   ok('0% shows a red bar label (was invisible grey)', b3 && b3.pct === 0 && /0 of 1/.test(b3.text), JSON.stringify(b3));
   const col = await page.evaluate(() => [0, 32, 33, 65, 66, 99, 100].map(gcsReadinessColor).join(','));
   ok('colour bands', col === '#dc2626,#dc2626,#f59e0b,#f59e0b,#65a30d,#65a30d,#16a34a', col);
+  // row shading (completion colours): green = cost + markup, yellow = one of them; on by default
+  const bg = id => page.$eval(`tr[data-item-id="${id}"]`, e => getComputedStyle(e).backgroundColor);
+  const bgE = await bg('E');
+  await page.click('text=Plant Section 2'); await page.waitForSelector('[data-cell="B-partNo"]'); await page.waitForTimeout(200);
+  const bgB = await bg('B'), bgD = await bg('D');
+  ok('row shading on by default: PASS line with cost is green', bgB === 'rgba(220, 252, 231, 0.75)', bgB);
+  ok('Custom 0% with cost is yellow (markup missing)', bgD === 'rgba(254, 249, 195, 0.9)', bgD);
+  ok('level-priced line with no cost is yellow', bgE === 'rgba(254, 249, 195, 0.9)', bgE);
+  await page.click('text=Plant Section 1'); await page.waitForSelector('[data-cell="A-partNo"]'); await page.waitForTimeout(200);
+  ok('default-level line with cost is green (was yellow: margin field read as 0)', (await bg('A')) === 'rgba(220, 252, 231, 0.75)', await bg('A'));
   ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+  const off = await openApp(b, html, JSON.stringify(st), { extraStorage: { 'gcs-table-intense': 'false' } });
+  await off.page.click('.pcw-nav .pcw-tab >> nth=1'); await off.page.waitForSelector('[data-cell="A-partNo"]');
+  ok('turned off in Setup: no shading', (await off.page.$eval('tr[data-item-id="A"]', e => getComputedStyle(e).backgroundColor)) === 'rgb(255, 255, 255)');
   await b.close();
   results.forEach(r => console.log((r.pass ? 'PASS ' : 'FAIL ') + r.name + (r.detail !== undefined ? '  — ' + r.detail : '')));
   console.log(`${results.filter(r => r.pass).length}/${results.length} pass`); process.exit(results.every(r => r.pass) ? 0 : 1);
