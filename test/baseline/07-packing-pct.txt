@@ -441,7 +441,8 @@ No approvals recorded yet. Click Approve & Lock to create the first entry.
 
 Sheet 1 ✏️
 + Add Tab SCM Search EQD Search
-▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 1,857.61 · Sales 2,183.11 USD · EBITDA -5.09% No segment
+▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 1,857.61 · Sales 2,183.11 USD · EBITDA -5.09% No segment Confidence
+Quotation 100%
 🎉 All lines on Sheet 1 ready to quote! — review 2 validation concerns before approving 100 %
 ＋ Add Item + Add Section ⚡ Quickest Lead 💰 Lowest Cost
 📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
@@ -591,6 +592,10 @@ USD · EBITDA -5.09%
 GCS Commercial Summary
 | Tab | Type | COGS | Sales | Contribution | EBITDA | EBITDA % | Target | Band | Price (rounded) | Discount
 | Sheet 1 | Section | 1,857.61 | 2,183.11 | 325.49 | -111.13 | -5.09% | — | — | 3,000.00 | —
+Costing confidence (share of line cost by source)
+Sheet 1
+Quotation 100.00% Project (included tabs)
+Quotation 100.00%
 | Project P&L (Excel GCS definitions)
 | Sales (sections + included options) | 2,183.11 USD | 100.00%
 | Cost of goods (incl. provisions) | 1,857.61 USD | 85.09%

@@ -171,6 +171,34 @@ const gcsBand = (ebitdaPct, targetPct) => {
 };
 const gcsCeil = (v, step) => (step > 0 ? Math.ceil(v / step - 1e-9) * step : v);
 
+// ── Costing confidence mix (Excel: pie of line cost by Cost Confidence on each Plant Section) ──
+// Web GCS uses each line's Source. Cost = the cost the line itself carries (leaf cost; a BOM parent's own cost),
+// multiplied through its parents' quantities, so the parts add up to the tab's line cost.
+const GCS_CONFIDENCE_COLORS = { Quotation: '#16a34a', Pricelist: '#2563eb', 'Project Cost': '#7c3aed', EQD: '#0891b2', 'Item Cost Use Guidance': '#f59e0b', Estimate: '#9ca3af', '': '#e2e8f0' };
+const gcsConfidenceLabel = src => (src ? (src === 'Item Cost Use Guidance' ? 'ICUG' : src) : 'No source');
+const gcsConfidenceMix = roots => {
+  const by = new Map();
+  const add = (src, v) => { if (v > 0) by.set(src, (by.get(src) || 0) + v); };
+  const walk = (n, mult) => {
+    const kids = n._ch || [];
+    if (!kids.length) { add(n.source || '', (n.totalCOGS || 0) * mult); return; }
+    const own = (n.totalCOGS || 0) / (n.qty || 1) - kids.reduce((s, c) => s + (c.totalCOGS || 0), 0);
+    add(n.source || '', own * (n.qty || 1) * mult);
+    kids.forEach(c => walk(c, mult * (n.qty || 1)));
+  };
+  (roots || []).forEach(n => walk(n, 1));
+  const total = [...by.values()].reduce((s, v) => s + v, 0);
+  const order = SOURCES.filter(x => x !== '').concat(['']);
+  const parts = [...by.entries()].sort((a, b) => (order.indexOf(a[0]) === -1 ? 99 : order.indexOf(a[0])) - (order.indexOf(b[0]) === -1 ? 99 : order.indexOf(b[0])))
+    .map(([source, cost]) => ({ source, label: gcsConfidenceLabel(source), cost, pct: total > 0 ? cost / total * 100 : 0, color: GCS_CONFIDENCE_COLORS[source] || '#64748b' }));
+  return { total, parts };
+};
+const gcsConfidenceMerge = mixes => {
+  const by = new Map(); (mixes || []).forEach(m => (m && m.parts || []).forEach(p => by.set(p.source, (by.get(p.source) || 0) + p.cost)));
+  const fake = [...by.entries()].map(([source, cost]) => ({ source, totalCOGS: cost, qty: 1, _ch: [] }));
+  return gcsConfidenceMix(fake);
+};
+
 // ── Commercial summary: per tab and project, Excel definitions ──
 //   COGS  = landed cost of the tab's lines + provisions
 //   Sales = line sales (after per-line discount) + provisions (sold at cost)
@@ -216,7 +244,7 @@ const computeGcsSummary = ({ tree, sheets, proj, pricing }) => {
     const price = gcsCeil(sales, roundTo);
     const discountPct = st.discount !== null && !isNaN(st.discount) ? st.discount : projDiscount;
     const discount = price * discountPct / 100;
-    return { id: sheet.id, name: sheet.name, ...st, lineCount: roots.length, lineCost, lineLanded, lineGross,
+    return { id: sheet.id, name: sheet.name, ...st, confidence: gcsConfidenceMix(roots), lineCount: roots.length, lineCost, lineLanded, lineGross,
       lineSales, provisions, provTotal, cogs, sales, contribution, mAndE, grossMargin, sAndA, ebitda,
       contributionPct: pct(contribution), grossMarginPct: pct(grossMargin), ebitdaPct: pct(ebitda),
       price, discountPct, discount };
@@ -244,6 +272,7 @@ const computeGcsSummary = ({ tree, sheets, proj, pricing }) => {
     ebitdaPct: pct(ebitda), target, band: sales > 0 ? gcsBand(pct(ebitda), target) : '',
     contractBeforeDiscount, shippingSell, shippingCost, shippingPrice,
     contractValue: contractBeforeDiscount - discount + shippingPrice, projectValueUSD,
+    confidence: gcsConfidenceMerge(included.map(t => t.confidence)),
   };
   return { tabs, project };
 };
