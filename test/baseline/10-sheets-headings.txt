@@ -463,6 +463,7 @@ Options
 | Supplier ⇅
 | Qty ⇅
 | Unit Cost ⇅
+| Cost Source
 | Infl. % / Scale ×
 | Cost Date / Size
 | Total Cost ⇅
@@ -489,7 +490,7 @@ Options
 [Supplier A]
 | [3.00] |
 [100.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -519,7 +520,7 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [55.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -547,7 +548,7 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [999.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]

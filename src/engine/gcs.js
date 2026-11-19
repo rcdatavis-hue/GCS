@@ -257,3 +257,42 @@ const gcsMigrateData = d => {
   });
   return { ...d, items, gcsFormat: GCS_FORMAT };
 };
+
+
+// ═══ AUTOMATIC COST FROM THE FEED, ANY BUSINESS UNIT (Excel GCS latest-cost lookup) ══════════════════════
+// The latest positive PO/PQ cost for the part, from whichever BU bought or quoted it (feed costs are in USD),
+// fills cost, cost date (so automatic inflation runs from it), supplier (if blank or auto-filled) and the cost
+// source location (the BU). A typed cost is never overwritten. If the part has no PO/PQ, a pricelist cost the
+// autofill wrote keeps working as before and its BU is recorded as the location.
+const GCS_COST_TYPE_SHORT = { 'Purchase Order': 'PO', 'Purchase Quote': 'PQ', Pricelist: 'PL' };
+// Provenance is only shown while the line still holds the cost it describes (a cost changed by paste, fill or
+// find & replace then reads as typed).
+const gcsCostProvenance = item => {
+  const r = item && item.costRef;
+  if (!r || !item.costLocation && !r.bu) return null;
+  if (r.cost !== undefined && Math.abs((Number(item.unitCost) || 0) - Number(r.cost)) > 1e-6) return null;
+  if (r.cost !== undefined && (item.ccy || 'USD') !== 'USD') return null;
+  return { location: item.costLocation || r.bu || '', type: r.type || '', short: GCS_COST_TYPE_SHORT[r.type] || r.type || '', doc: r.doc || '', date: r.date || '', supplier: r.supplier || '', qty: r.qty };
+};
+const gcsMayAutoCost = item => !(Number(item.unitCost) > 0) || item._autoPricelist === true || (item._autoCost === true && !!gcsCostProvenance(item));
+// r: the line as it will be after any other autofill updates; lc: DataService.getLatestCost result (or null).
+// opts: keepSupplier (quote lines keep theirs), force (bulk refresh that may overwrite typed costs),
+// clearIfNone (refresh: remove an automatic cost the feed no longer has), defaultSource.
+const gcsCostFillPatch = (r, lc, plEntry, opts = {}) => {
+  if (!opts.force && !gcsMayAutoCost(r)) return null;
+  if (lc && lc.unitCost > 0) {
+    const cost = parseFloat(Number(lc.unitCost).toFixed(4));
+    const p = { unitCost: cost, ccy: 'USD', costDate: lc.date || '', costLocation: lc.bu || '', source: 'Project Cost',
+      costRef: { type: lc.status || '', doc: lc.docNo || '', date: lc.date || '', qty: lc.qty, supplier: lc.supplier || '', bu: lc.bu || '', cost },
+      _autoCost: true, _autoPricelist: false, manualSellPrice: null };
+    if (!opts.keepSupplier && lc.supplier && (!r.supplier || r._autoSupplier === true)) { p.supplier = lc.supplier; p._autoSupplier = true; }
+    return p;
+  }
+  if (r._autoPricelist === true && plEntry && plEntry.cost !== null && plEntry.cost !== undefined) {
+    const cost = parseFloat(parseFloat(plEntry.cost).toFixed(4));
+    return { costLocation: plEntry.sourceBU || '', costRef: { type: 'Pricelist', bu: plEntry.sourceBU || '', cost }, _autoCost: false };
+  }
+  if (opts.clearIfNone && r._autoCost === true) return { unitCost: 0, costDate: '', costLocation: '', costRef: null, _autoCost: false, source: opts.defaultSource || '' };
+  return null;
+};
+const gcsFeedLatestCost = async pn => { try { return pn && DataService.getLatestCost ? await DataService.getLatestCost(pn) : null; } catch (e) { return null; } };

@@ -38,9 +38,22 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
   insertion and latest-cost picking against real files (15 checks).
 - `test/scm-ui.js dist/index.html <SCM_Master_Index.xlsm> <model.xlsx>`: SCM Search end to end with a simulated synced
   folder (stubbed `showDirectoryPicker`) and a stubbed feed (14 checks). `SHOT=/tmp/x` saves screenshots.
+- `test/cost-source.js dist/index.html`: automatic cost from any BU and the cost source location (13 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.4 · 2026-11-19: automatic cost from the feed regardless of business unit, with its cost source location.
+  - `DataService.getLatestCost(part)`: latest positive-cost PO or PQ across every BU (feed costs are USD; same
+    date → the PO), indexed once per loaded sheet. Used by every autofill: typing a part number, SAP quote import,
+    paste, bulk refresh and SCM import. It takes priority over the pricelist (as in the Excel GCS latest-cost
+    lookup); a pricelist cost is still used when the part has no PO/PQ.
+  - Fills cost (USD), cost date (so automatic inflation runs from it), supplier if blank or auto-filled, source
+    "Project Cost", and `costLocation` + `costRef` {type, doc, date, qty, supplier, bu, cost}. Typed costs are never
+    overwritten (except by a refresh told to overwrite); typing a cost or currency clears the location.
+  - New "Cost Source" column after Unit Cost: BU badge (amber when not the project BU) + PO/PQ/PL, tooltip with the
+    document; click opens the cost history with the other BUs already listed. Excel export: "Cost Source Location"
+    and "Cost Reference" columns.
+  - Test `test/cost-source.js` (13 checks; feed simulated with `DataService.__seedSheets`).
 - v0.3 · 2026-11-19: SCM (Sales Cost Model) search and import, replacing the Excel GCS "SCM Search" macro and sheet.
   - Engine `engine/scm.js`: reads `SCM_Master_Index_v1.xlsm` (catalogue, model lines, Data Quality, Refresh Log) or
     every SCM file directly; V1 and V2 model files (V2 adds BOM level, tag and supplier reference; BOM levels become

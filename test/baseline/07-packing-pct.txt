@@ -462,6 +462,7 @@ Sheet 1 ✏️
 | Supplier ⇅
 | Qty ⇅
 | Unit Cost ⇅
+| Cost Source
 | Infl. % / Scale ×
 | Cost Date / Size
 | Total Cost ⇅
@@ -486,7 +487,7 @@ Sheet 1 ✏️
 [Supplier A]
 | [1.00] |
 [800.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -512,7 +513,7 @@ Q [Quotation]
 [Supplier A]
 | [5.00] |
 [200.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]

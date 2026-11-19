@@ -28,7 +28,8 @@ const files = { index: fs.readFileSync(indexFile).toString('base64'), model: fs.
     window.showDirectoryPicker = async () => root;
     // Feed: one PO for the root SAP item only
     DataService.isConnected = () => true;
-    DataService.getCostHistory = async (sap) => sap === '10401649' ? [{ docNo: 'PO123', supplier: 'Acme Fab', date: '2026-03-01', unitCost: 45000, ccy: 'USD', qty: 1, status: 'Closed' }] : [];
+    // PO for the root SAP item from another BU (costs fill regardless of BU)
+    DataService.__seedSheets({ purchaseOrders: [{ itemNo: '10401649', unitPrice: 45000, date: '2026-03-01', supplierName: 'Acme Fab', poNo: 'PO123', qty: 1, db: 'ECL' }], purchaseQuotes: [] });
   }, { files, MODEL_ID });
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForTimeout(300);
   // Focus a line on tab 2 so the default position is "after" it
@@ -70,6 +71,8 @@ const files = { index: fs.readFileSync(indexFile).toString('base64'), model: fs.
   ok('model heading line inserted', (await page.content()).includes('SCM: Model III Extractor (Crown Series 903)'));
   const firstImported = await page.$$eval('[data-cell$="-unitCost"]', els => els.map(e => e.value));
   ok('root SAP item costed from the feed (45,000)', firstImported.some(v => /45,?000/.test(v)), firstImported.slice(0, 3).join(' | '));
+  const locs = await page.$$eval('[data-cost-loc]', els => els.map(e => e.getAttribute('data-cost-loc')));
+  ok('its cost source location (ECL) is shown', locs.length === 1 && locs[0] === 'ECL', locs.join(','));
   const tab1 = await (async () => { await page.click('text=Plant Section 1'); await page.waitForTimeout(300); return page.$$eval('[data-cell$="-partNo"]', els => els.map(e => e.value)); })();
   ok('other tab untouched', tab1.length === 1 && tab1[0] === 'PA', tab1.join(','));
   ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));

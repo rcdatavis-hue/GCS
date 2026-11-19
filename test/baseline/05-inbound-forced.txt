@@ -466,6 +466,7 @@ Quote Readiness — 4 of 5 items complete 80 %
 | Supplier ⇅
 | Qty ⇅
 | Unit Cost ⇅
+| Cost Source
 | Infl. % / Scale ×
 | Cost Date / Size
 | Total Cost ⇅
@@ -490,7 +491,7 @@ Quote Readiness — 4 of 5 items complete 80 %
 [Supplier A]
 | [1.00] |
 [400.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -516,7 +517,7 @@ Q [Quotation]
 [Supplier B]
 | [2.00] |
 [600.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -543,7 +544,7 @@ PL
 [Supplier A]
 | [1.00] |
 [300.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -569,7 +570,7 @@ PL [Pricelist]
 [Supplier B]
 | [1.00] |
 [0.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]
@@ -592,7 +593,7 @@ Q [Quotation]
 [Supplier C]
 | [1.00] |
 [150.00] [USD]
-|
+| — |
 [0.00] % [1.00] ×
 |
 [] [0.00]

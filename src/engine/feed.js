@@ -510,6 +510,25 @@ async function buildPartIndex() {
  _partIndex._built = true;
 }
 
+const _gcsLatestIdx = new WeakMap();
+function gcsLatestCostIndex(rows, status, docKey) {
+ let m = _gcsLatestIdx.get(rows);
+ if (m) return m;
+ m = new Map();
+ for (const r of rows) {
+  const pn = (r.itemNo || '').toString().toLowerCase().trim();
+  if (!pn || !r.unitPrice) continue;
+  const unitCost = parsePrice(r.unitPrice);
+  if (!(unitCost > 0)) continue;
+  const date = fmtDate(r.date) || '';
+  const cur = m.get(pn);
+  if (cur && cur.date >= date) continue;
+  m.set(pn, { partNumber: r.itemNo.toString(), unitCost, ccy: 'USD', date, supplier: r.supplierName || '', docNo: (r[docKey] || '').toString(), status, qty: parseFloat(r.qty) || 1, bu: normDB(r.db) });
+ }
+ _gcsLatestIdx.set(rows, m);
+ return m;
+}
+
 function normDB(db) {
  if (!db) return '';
  const s = db.toString().trim().toUpperCase();
@@ -1018,6 +1037,22 @@ return {
   }
  }
  return results.sort((a,b) => b.date.localeCompare(a.date)).slice(0, 20);
+ },
+
+ // Tests only: put parsed sheet rows in the cache (no feed file needed).
+ __seedSheets(sheets) { Object.assign(_cache, sheets || {}); },
+
+ // GCS: latest positive-cost PO/PQ for a part across every business unit (Excel GCS tblLatestCost).
+ // Costs in the feed are normalised to USD. Returns {unitCost, ccy, date, supplier, docNo, status, qty, bu} or null.
+ // Indexed once per loaded sheet (WeakMap on the cached rows), so bulk autofill does not rescan the sheets per part.
+ async getLatestCost(partNumber) {
+ const pn = (partNumber || '').toString().toLowerCase().trim();
+ if (!pn) return null;
+ const [po, pq] = await Promise.all([loadSheet('purchaseOrders', false), loadSheet('purchaseQuotes', false)]);
+ const a = po ? gcsLatestCostIndex(po, 'Purchase Order', 'poNo').get(pn) : null;
+ const b = pq ? gcsLatestCostIndex(pq, 'Purchase Quote', 'docNum').get(pn) : null;
+ if (!a || !b) return a || b || null;
+ return b.date > a.date ? b : a; // same date: the PO wins
  },
 
  async getCostHistory(partNumber, bu) {
