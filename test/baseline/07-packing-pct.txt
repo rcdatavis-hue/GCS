@@ -467,7 +467,6 @@ Sheet 1 ✏️
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Lead Time (D) ⇅ D
 | Category
 | Markup ⇅
 | Unit Sell Price ⇅
@@ -487,11 +486,11 @@ Sheet 1 ✏️
 [Supplier A]
 | [1.00] |
 [800.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 800.00 USD | 800.00 USD | [10.00] | [—] |
+| 800.00 USD | 800.00 USD | [—] |
 [Custom %] [25.00]
 |
 ✏️
@@ -513,11 +512,11 @@ Q [Quotation]
 [Supplier A]
 | [5.00] |
 [200.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 1,000.00 USD | 1,000.00 USD | [10.00] | [—] |
+| 1,000.00 USD | 1,000.00 USD | [—] |
 [Custom %] [15.00]
 |
 ✏️
@@ -533,7 +532,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 1,800.00 USD | 1,800.00 USD | | | | | 2,125.49 USD | | |
+| TOTALS | 1,800.00 USD | 1,800.00 USD | | | | 2,125.49 USD | | |
 | Outbound Freight 1 : Freight 35 — cost 100.00 USD at 10.00% margin | 111.11 | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 2,236.60 USD | | |
 

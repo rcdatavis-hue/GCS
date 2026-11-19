@@ -38,10 +38,18 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
   insertion and latest-cost picking against real files (15 checks).
 - `test/scm-ui.js dist/index.html <SCM_Master_Index.xlsm> <model.xlsx>`: SCM Search end to end with a simulated synced
   folder (stubbed `showDirectoryPicker`) and a stubbed feed (14 checks). `SHOT=/tmp/x` saves screenshots.
-- `test/cost-source.js dist/index.html`: automatic cost from any BU and the cost source location (13 checks).
+- `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default (20 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.5 · 2026-11-19: Cost Source picker and per-line lead time hidden.
+  - Clicking the Cost Source cell lists every business unit with a PO/PQ cost for the part (latest per BU, USD,
+    `DataService.getLatestCostByBU`); choosing one pulls that BU's cost, date, supplier and reference into the line
+    (like changing the Cost Source Location in Excel). It replaces a typed cost, being an explicit choice.
+    "Full cost history" opens the history with all BUs.
+  - Lead Time (D) column hidden by default (project costing); layouts saved earlier are switched once
+    (`_gcsLeadTimeDefault` flag), after which it can be shown again from Columns.
+  - `test/cost-source.js` now 20 checks.
 - v0.4 · 2026-11-19: automatic cost from the feed regardless of business unit, with its cost source location.
   - `DataService.getLatestCost(part)`: latest positive-cost PO or PQ across every BU (feed costs are USD; same
     date → the PO), indexed once per loaded sheet. Used by every autofill: typing a part number, SAP quote import,

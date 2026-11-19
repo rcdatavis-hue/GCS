@@ -468,7 +468,6 @@ Options
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Lead Time (D) ⇅ D
 | Category
 | Markup ⇅
 | Unit Sell Price ⇅
@@ -490,11 +489,11 @@ Options
 [Supplier A]
 | [3.00] |
 [100.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 300.00 USD | 300.00 USD | [10.00] | [—] |
+| 300.00 USD | 300.00 USD | [—] |
 [Custom %] [25.00]
 |
 ✏️
@@ -520,11 +519,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [55.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 55.00 USD | 55.00 USD | [10.00] | [—] |
+| 55.00 USD | 55.00 USD | [—] |
 [Custom %] [40.00]
 |
 ✏️
@@ -548,11 +547,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [999.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 999.00 USD | 999.00 USD | [10.00] | [—] |
+| 999.00 USD | 999.00 USD | [—] |
 [Custom %] [25.00]
 |
 ✏️
@@ -568,7 +567,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 5,704.00 USD | 5,704.00 USD | | | | | 6,981.88 USD | | |
+| TOTALS | 5,704.00 USD | 5,704.00 USD | | | | 6,981.88 USD | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 6,981.88 USD | | |
 
 ===== TAB 🚢 Freight & Tariffs

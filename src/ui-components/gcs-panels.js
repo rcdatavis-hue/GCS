@@ -144,3 +144,60 @@ var GcsSummaryCard = function GcsSummaryCard({ gcsSummary, proj }) {
           P.shippingPrice ? gcsH("tr", null, gcsH("td", { style: { padding: '3px 8px', fontSize: 12 } }, 'Shipping & freight (outbound, rounded; not in EBITDA)'), td(gcsMoney(P.shippingPrice, ccy))) : null,
           gcsH("tr", { style: { borderTop: '2px solid var(--pcw-border, #e2e8f0)' } }, gcsH("td", { style: { padding: '6px 8px', fontSize: 13, fontWeight: 700 } }, 'Total contract value'), td(gcsMoney(P.contractValue, ccy), { bold: true, color: '#b45309' })))))));
 };
+
+// ═══ COST SOURCE CELL (Excel "Cost Source Location" picker) ══════════════════════════════════════════════
+// Shows the BU the automatic cost came from. Clicking lists every BU with a PO/PQ cost for the part (latest per
+// BU, USD); choosing one pulls that BU's latest cost, date, supplier and reference into the line, like changing
+// the Cost Source Location in the Excel GCS. Choosing replaces a typed cost too (it is an explicit choice).
+var GcsCostSourceCell = function GcsCostSourceCell({ n, bu, locked, updItemMerge, showCostHistory }) {
+  var h = React.createElement;
+  var [open, setOpen] = useState(null);          // {top,left} when open
+  var [opts, setOpts] = useState(null);          // null = loading
+  var btnRef = useRef(null), popRef = useRef(null);
+  var pv = gcsCostProvenance(n);
+  var projBu = String(bu || '').toUpperCase();
+  var other = pv && pv.location && projBu && pv.location !== projBu;
+  useEffect(() => {
+    if (!open) return;
+    var close = e => { if (popRef.current && !popRef.current.contains(e.target) && btnRef.current && !btnRef.current.contains(e.target)) setOpen(null); };
+    var esc = e => { if (e.key === 'Escape') setOpen(null); };
+    document.addEventListener('mousedown', close); document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('keydown', esc); };
+  }, [open]);
+  var toggle = async () => {
+    if (open) { setOpen(null); return; }
+    var r = btnRef.current.getBoundingClientRect();
+    setOpen({ top: Math.min(r.bottom + 4, window.innerHeight - 240), left: Math.max(8, Math.min(r.left - 120, window.innerWidth - 400)) });
+    setOpts(null);
+    try { setOpts(DataService.isConnected() && n.partNumber ? await DataService.getLatestCostByBU(n.partNumber) : []); } catch (e) { setOpts([]); }
+  };
+  var pick = rec => { var p = gcsCostFillPatch(n, rec, null, { force: true }); if (p) updItemMerge(n.id, p); setOpen(null); };
+  var tip = pv ? [`Cost source location: ${pv.location || 'unknown BU'}`, pv.type ? `${pv.type}${pv.doc ? ' ' + pv.doc : ''}` : '', pv.date ? `Dated ${pv.date}` : '', pv.supplier ? `Supplier: ${pv.supplier}` : '', pv.qty ? `Qty on document: ${pv.qty}` : '', 'Costs in the feed are in USD. Click to choose another business unit.'].filter(Boolean).join('\n')
+    : (n.partNumber ? 'Typed or no automatic cost. Click to take the latest PO/PQ cost from a business unit.' : 'Enter a part number to choose a cost source');
+  var short = { 'Purchase Order': 'PO', 'Purchase Quote': 'PQ' };
+  return h("td", { className: "py-1 px-1 text-center", "data-cell": `${n.id}-costLoc` },
+    h("button", { type: "button", ref: btnRef, title: tip, "data-cost-loc": pv ? pv.location : '', disabled: !n.partNumber, onClick: toggle,
+      style: { display: 'inline-flex', alignItems: 'center', gap: 3, border: 'none', background: 'none', cursor: n.partNumber ? 'pointer' : 'default', padding: 0 } },
+      pv ? h("span", { style: { fontSize: 10, fontWeight: 800, padding: '1px 6px', borderRadius: 4, background: other ? '#fef3c7' : '#ede9fe', color: other ? '#92400e' : '#5b21b6' } }, pv.location || '?') : h("span", { style: { color: '#cbd5e1', fontSize: 10 } }, "—"),
+      pv && pv.short ? h("span", { style: { fontSize: 9, color: '#64748b', fontWeight: 600 } }, pv.short) : null,
+      n.partNumber ? h("span", { style: { fontSize: 8, color: '#94a3b8' } }, "▾") : null),
+    open ? ReactDOM.createPortal(h("div", { ref: popRef, "data-cost-picker": n.id, style: { position: 'fixed', top: open.top, left: open.left, width: 390, zIndex: 1200, background: 'var(--pcw-surface, #fff)', border: '1px solid var(--pcw-border, #e2e8f0)', borderRadius: 8, boxShadow: '0 12px 30px rgba(0,0,0,.25)', padding: 8, textAlign: 'left', fontSize: 12 } },
+      h("div", { style: { fontWeight: 700, marginBottom: 6 } }, `Cost source location — ${n.partNumber}`),
+      opts === null ? h("div", { style: { color: '#64748b', padding: 6 } }, "Looking up…")
+        : !DataService.isConnected() ? h("div", { style: { color: '#92400e', padding: 6 } }, "Feed file not connected.")
+        : !opts.length ? h("div", { style: { color: '#64748b', padding: 6 } }, "No PO or PQ cost for this part in any business unit.")
+        : h("div", { style: { display: 'flex', flexDirection: 'column', gap: 2 } }, opts.map(o => {
+          var cur = pv && pv.location === o.bu && pv.doc === o.docNo;
+          return h("button", { key: o.bu, type: "button", "data-cost-option": o.bu, disabled: locked, onClick: () => pick(o),
+            style: { display: 'grid', gridTemplateColumns: '46px 30px 92px 76px 1fr', gap: 6, alignItems: 'center', padding: '5px 6px', border: 'none', borderRadius: 5, cursor: locked ? 'default' : 'pointer', textAlign: 'left', background: cur ? '#ede9fe' : 'transparent', fontSize: 11.5 } },
+            h("b", { style: { color: o.bu === projBu ? '#5b21b6' : '#92400e' } }, o.bu || '?'),
+            h("span", { style: { color: '#64748b' } }, short[o.status] || o.status),
+            h("span", { className: "pcw-mono", style: { textAlign: 'right', fontWeight: 600 } }, fc(o.unitCost) + ' USD'),
+            h("span", { className: "pcw-mono", style: { color: '#64748b' } }, o.date),
+            h("span", { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#475569' }, title: `${o.docNo} · ${o.supplier}` }, o.supplier || o.docNo));
+        })),
+      h("div", { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, borderTop: '1px solid var(--pcw-border, #e2e8f0)', paddingTop: 6 } },
+        h("span", { style: { fontSize: 10.5, color: '#64748b' } }, "Latest cost per business unit, in USD."),
+        h("button", { type: "button", className: "pcw-btn pcw-btn-secondary", style: { fontSize: 11, padding: '2px 8px' }, onClick: () => { setOpen(null); showCostHistory(n.id, n.partNumber, true); } }, "Full cost history"))),
+      document.body) : null);
+};

@@ -514,17 +514,21 @@ const _gcsLatestIdx = new WeakMap();
 function gcsLatestCostIndex(rows, status, docKey) {
  let m = _gcsLatestIdx.get(rows);
  if (m) return m;
- m = new Map();
+ m = new Map(); m.byBu = new Map();
  for (const r of rows) {
   const pn = (r.itemNo || '').toString().toLowerCase().trim();
   if (!pn || !r.unitPrice) continue;
   const unitCost = parsePrice(r.unitPrice);
   if (!(unitCost > 0)) continue;
   const date = fmtDate(r.date) || '';
+  const rec = { partNumber: r.itemNo.toString(), unitCost, ccy: 'USD', date, supplier: r.supplierName || '', docNo: (r[docKey] || '').toString(), status, qty: parseFloat(r.qty) || 1, bu: normDB(r.db) };
+  const perBu = m.byBu.get(pn) || (m.byBu.set(pn, new Map()), m.byBu.get(pn));
+  const cb = perBu.get(rec.bu); if (!cb || cb.date < date) perBu.set(rec.bu, rec);
   const cur = m.get(pn);
   if (cur && cur.date >= date) continue;
-  m.set(pn, { partNumber: r.itemNo.toString(), unitCost, ccy: 'USD', date, supplier: r.supplierName || '', docNo: (r[docKey] || '').toString(), status, qty: parseFloat(r.qty) || 1, bu: normDB(r.db) });
+  m.set(pn, rec);
  }
+ m.byBu.forEach((v, k) => m.byBu.set(k, [...v.values()]));
  _gcsLatestIdx.set(rows, m);
  return m;
 }
@@ -1037,6 +1041,18 @@ return {
   }
  }
  return results.sort((a,b) => b.date.localeCompare(a.date)).slice(0, 20);
+ },
+
+ // GCS: latest positive-cost PO/PQ per business unit for a part (the Cost Source picker). Newest first.
+ async getLatestCostByBU(partNumber) {
+ const pn = (partNumber || '').toString().toLowerCase().trim();
+ if (!pn) return [];
+ const [po, pq] = await Promise.all([loadSheet('purchaseOrders', false), loadSheet('purchaseQuotes', false)]);
+ const best = new Map();
+ const take = r => { const cur = best.get(r.bu); if (!cur || r.date > cur.date || (r.date === cur.date && r.status === 'Purchase Order' && cur.status !== 'Purchase Order')) best.set(r.bu, r); };
+ if (po) (gcsLatestCostIndex(po, 'Purchase Order', 'poNo').byBu.get(pn) || []).forEach(take);
+ if (pq) (gcsLatestCostIndex(pq, 'Purchase Quote', 'docNum').byBu.get(pn) || []).forEach(take);
+ return [...best.values()].sort((x, y) => y.date.localeCompare(x.date) || x.bu.localeCompare(y.bu));
  },
 
  // Tests only: put parsed sheet rows in the cache (no feed file needed).

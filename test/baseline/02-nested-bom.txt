@@ -467,7 +467,6 @@ Sheet 1 ✏️
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Lead Time (D) ⇅ D
 | Category
 | Markup ⇅
 | Unit Sell Price ⇅
@@ -487,11 +486,11 @@ Sheet 1 ✏️
 [Supplier A]
 | [2.00] |
 [50.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 430.00 USD | 430.00 USD | [10.00] | [—] |
+| 430.00 USD | 430.00 USD | [—] |
 [Custom %] [28.00]
 |
 ✏️
@@ -513,11 +512,11 @@ L 1 └
 [Supplier A]
 | [3.00] |
 [30.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 90.00 USD | · | [10.00] | [—] | · | ↑ parent | ↑ parent | · |
+| 90.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -533,11 +532,11 @@ BOM L 1 └
 [Supplier A]
 | [1.00] |
 [0.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 75.00 USD | · | [10.00] | [—] | · | ↑ parent | ↑ parent | · |
+| 75.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -553,11 +552,11 @@ L 2 └
 [Supplier A]
 | [4.00] |
 [15.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 60.00 USD | · | [10.00] | [—] | · | ↑ parent | ↑ parent | · |
+| 60.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -573,11 +572,11 @@ L 2 └
 [Supplier B]
 | [2.00] |
 [7.50] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 15.00 USD | · | [10.00] | [—] | · | ↑ parent | ↑ parent | · |
+| 15.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -593,11 +592,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [0.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 240.00 USD | 240.00 USD | [10.00] | [—] |
+| 240.00 USD | 240.00 USD | [—] |
 [Custom %]
 73.3
 |
@@ -620,11 +619,11 @@ L 1 └
 [Supplier A]
 | [2.00] |
 [120.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 240.00 USD | · | [10.00] | [—] | · | ↑ parent | ↑ parent | · |
+| 240.00 USD | · | [—] | · | ↑ parent | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -640,11 +639,11 @@ Q [Quotation]
 [Supplier A]
 | [3.00] |
 [80.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 240.00 USD | 240.00 USD | [10.00] | [—] |
+| 240.00 USD | 240.00 USD | [—] |
 [Custom %]
 46.7
 |
@@ -657,7 +656,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 910.00 USD | 910.00 USD | | | | | 1,947.22 USD | | |
+| TOTALS | 910.00 USD | 910.00 USD | | | | 1,947.22 USD | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 1,947.22 USD | | |
 
 ===== TAB 🚢 Freight & Tariffs

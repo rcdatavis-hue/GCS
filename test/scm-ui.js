@@ -71,7 +71,7 @@ const files = { index: fs.readFileSync(indexFile).toString('base64'), model: fs.
   ok('model heading line inserted', (await page.content()).includes('SCM: Model III Extractor (Crown Series 903)'));
   const firstImported = await page.$$eval('[data-cell$="-unitCost"]', els => els.map(e => e.value));
   ok('root SAP item costed from the feed (45,000)', firstImported.some(v => /45,?000/.test(v)), firstImported.slice(0, 3).join(' | '));
-  const locs = await page.$$eval('[data-cost-loc]', els => els.map(e => e.getAttribute('data-cost-loc')));
+  const locs = (await page.$$eval('[data-cost-loc]', els => els.map(e => e.getAttribute('data-cost-loc')))).filter(Boolean);
   ok('its cost source location (ECL) is shown', locs.length === 1 && locs[0] === 'ECL', locs.join(','));
   const tab1 = await (async () => { await page.click('text=Plant Section 1'); await page.waitForTimeout(300); return page.$$eval('[data-cell$="-partNo"]', els => els.map(e => e.value)); })();
   ok('other tab untouched', tab1.length === 1 && tab1[0] === 'PA', tab1.join(','));

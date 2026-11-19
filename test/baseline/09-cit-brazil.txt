@@ -468,8 +468,7 @@ Sheet 1 ✏️
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Imported? | AFRMM? | Lead Time (D) ⇅ D
-| Category
+| Imported? | AFRMM? | Category
 | Markup ⇅
 | Unit Sell Price ⇅
 | Total Sell Price ⇅
@@ -490,11 +489,11 @@ Sheet 1 ✏️
 [Supplier A]
 | [1.00] |
 [1,200.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 6,960.00 BRL | 12,138.00 BRL | [x] | [x] | [10.00] | [—] |
+| 6,960.00 BRL | 12,138.00 BRL | [x] | [x] | [—] |
 [Custom %] [30.00]
 |
 ✏️
@@ -516,11 +515,11 @@ Q [Quotation]
 [Supplier A]
 | [2.00] |
 [300.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 3,480.00 BRL | 4,576.06 BRL | [ ] | [ ] | [10.00] | [—] |
+| 3,480.00 BRL | 4,576.06 BRL | [ ] | [ ] | [—] |
 [Custom %] [25.00]
 |
 ✏️
@@ -542,11 +541,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [0.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 4,292.00 BRL | 7,217.11 BRL | [ ] | [ ] | [10.00] | [—] |
+| 4,292.00 BRL | 7,217.11 BRL | [ ] | [ ] | [—] |
 [Custom %] [20.00]
 |
 ✏️
@@ -568,11 +567,11 @@ L 1 └
 [Supplier A]
 | [1.00] |
 [500.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 2,900.00 BRL | · | [x] ↑ via parent | [x] ↑ via parent | [10.00] | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
+| 2,900.00 BRL | · | [x] ↑ via parent | [x] ↑ via parent | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
@@ -588,17 +587,17 @@ L 1 └
 [Supplier A]
 | [3.00] |
 [80.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 1,392.00 BRL | · | [x] ↑ via parent | [ ] | [10.00] | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
+| 1,392.00 BRL | · | [x] ↑ via parent | [ ] | [—] | · | ↑ parent | ↑ parent | — | ↑ parent | · |
 Q [Quotation]
 |
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 14,732.00 BRL | 23,931.17 BRL | | | | | | | 34,167.35 BRL | | 43,244.09 BRL | | |
+| TOTALS | 14,732.00 BRL | 23,931.17 BRL | | | | | | 34,167.35 BRL | | 43,244.09 BRL | | |
 | Outbound Freight 1 : Freight 46 — cost 1,500.00 BRL at 12.00% margin | distributed | | | | |
 | TOTAL SELL PRICE (LINES) | 34,167.35 BRL | | 34,167.35 BRL | | |
 | TOTAL SELL PRICE (WITH SALES TAXES) | 43,244.09 BRL | | |

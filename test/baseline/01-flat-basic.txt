@@ -467,7 +467,6 @@ Quote Readiness — 3 of 4 items complete 75 %
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Lead Time (D) ⇅ D
 | Category
 | Markup ⇅
 | Unit Sell Price ⇅
@@ -487,11 +486,11 @@ Quote Readiness — 3 of 4 items complete 75 %
 [Supplier A]
 | [2.00] |
 [100.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 200.00 USD | 200.00 USD | [10.00] | [—] |
+| 200.00 USD | 200.00 USD | [—] |
 [Custom %] [33.50]
 |
 ✏️
@@ -513,11 +512,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [250.50] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 250.50 USD | 250.50 USD | [10.00] | [—] |
+| 250.50 USD | 250.50 USD | [—] |
 [Custom %] [20.00]
 |
 ✏️
@@ -539,11 +538,11 @@ Q [Quotation]
 [Supplier B]
 | [40.00] |
 [12.34] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 493.60 USD | 493.60 USD | [10.00] | [—] |
+| 493.60 USD | 493.60 USD | [—] |
 [Custom %] [35.00]
 |
 ✏️
@@ -568,7 +567,7 @@ Q [Quotation]
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 0.00 USD | 0.00 USD | [10.00] | [—] |
+| 0.00 USD | 0.00 USD | [—] |
 [Custom %] [0.00]
 | ↑ parent | 0.00 USD | [0.00] |
 Q [Quotation]
@@ -577,7 +576,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 944.10 USD | 944.10 USD | | | | | 1,490.25 USD | | |
+| TOTALS | 944.10 USD | 944.10 USD | | | | 1,490.25 USD | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 1,490.25 USD | | |
 
 ===== TAB 🚢 Freight & Tariffs

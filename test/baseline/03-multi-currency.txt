@@ -467,7 +467,6 @@ Sheet 1 ✏️
 | Cost Date / Size
 | Total Cost ⇅
 | Landed Cost
-| Lead Time (D) ⇅ D
 | Category
 | Markup ⇅
 | Unit Sell Price ⇅
@@ -487,11 +486,11 @@ Sheet 1 ✏️
 [Supplier A]
 | [1.00] |
 [1,000.00] [EUR]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 858.70 GBP | 902.49 GBP | [10.00] | [—] |
+| 858.70 GBP | 902.49 GBP | [—] |
 [Custom %] [22.00]
 |
 ✏️
@@ -513,11 +512,11 @@ Q [Quotation]
 [Supplier A]
 | [3.00] |
 [500.00] [USD]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 1,185.00 GBP | 1,245.43 GBP | [10.00] | [—] |
+| 1,185.00 GBP | 1,245.43 GBP | [—] |
 [Custom %] [25.00]
 |
 ✏️
@@ -539,11 +538,11 @@ Q [Quotation]
 [Supplier A]
 | [1.00] |
 [420.00] [GBP]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 420.00 GBP | 441.42 GBP | [10.00] | [—] |
+| 420.00 GBP | 441.42 GBP | [—] |
 [Custom %] [18.00]
 |
 ✏️
@@ -565,11 +564,11 @@ Q [Quotation]
 [Supplier A]
 | [2.00] |
 [9,500.00] [BRL]
-| — |
+| — ▾ |
 [0.00] % [1.00] ×
 |
 [] [0.00]
-| 2,587.93 GBP | 2,719.90 GBP | [10.00] | [—] |
+| 2,587.93 GBP | 2,719.90 GBP | [—] |
 [Custom %] [30.00]
 |
 ✏️
@@ -581,7 +580,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 5,051.63 GBP | 5,309.24 GBP | | | | | 7,241.49 GBP | | |
+| TOTALS | 5,051.63 GBP | 5,309.24 GBP | | | | 7,241.49 GBP | | |
 | Outbound Freight 1 : Freight 18 — cost 200.00 GBP at 15.00% margin | 235.29 | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 7,476.79 GBP | | |
 

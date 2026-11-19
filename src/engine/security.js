@@ -13,7 +13,7 @@ const APP_SHORT = 'GCS';
 const FILE_EXT = '.gcs';                    // saves as .gcs; still opens PCW .pcw files
 const FORKED_FROM = 'PCW v0.8 · 2026-11-17';
 
-const PCW_VERSION = 'v0.4';
+const PCW_VERSION = 'v0.5';
 const PCW_BUILD = '2026-11-19';
 
 const sanitizeHTML = (val) => {
