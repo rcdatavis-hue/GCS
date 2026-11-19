@@ -42,9 +42,19 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
 - `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
 - `test/scale-infl.js dist/index.html`: scaling column visibility by segment, inflation colours, cost date default, category codes (14 checks).
+- `test/readiness.js dist/index.html`: readiness per tab, PASS counts, colours, tooltip (8 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.11 · 2026-11-19: quote readiness fixes.
+  - The readiness bar counted every tab; it now describes the tab on screen (labelled with its name), from the same
+    per-line rule as the row tick (`pricing.quoteReadyMap`).
+  - Lines at PASS (0%) never counted as ready; any markup level now counts (Custom needs a % above 0, or a manual sell
+    price) — `pricing.hasMarkupOf`. The row tooltip checked the raw margin field and said "missing margin" on
+    level-priced lines; it now uses the same rule.
+  - Bar under 33% was drawn grey on a grey track (invisible). Colours now: red < 33%, amber 33-65%, light green
+    66-99%, green 100% (`gcsReadinessColor`), and the % label uses the same colour.
+  - Test `test/readiness.js` (8 checks).
 - v0.10 · 2026-11-19: fewer visible columns. Cost Date hidden by default (layouts saved earlier switched once,
   `_gcsCostDateDefault`; inflation's tooltip still states the months since the cost date). Category shows codes
   only (A, C, C5 …; 46 px), with the name in the option tooltip, the group heading and the cell tooltip

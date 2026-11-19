@@ -19,6 +19,8 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
   // GCS: margin comes from the line's markup level in its tab's markup table (or a Custom %); no contingency.
   const sheetIdx = gcsSheetIndex(sheets);
   const marginOf = n => gcsMarkupPct(n, sheetIdx.settingsOf(n));
+  // GCS: a line has its markup when it uses a level (PASS = 0% is a deliberate choice) or a Custom % above 0, or a manual sell price.
+  const hasMarkupOf = n => n.manualSellPrice > 0 || marginOf(n) > 0 || gcsLevelOf(n, sheetIdx.settingsOf(n)) !== GCS_CUSTOM_LEVEL;
 
   const topCOGS = tree.reduce((s, n) => s + n.totalCOGS, 0);
   const totalInbFrt = frt.inbound.reduce((s, e) => s + toSC(e.cost || 0, e.ccy || "USD"), 0);
@@ -298,8 +300,8 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
   visitAll(n => {
     const isParent = n._ch && n._ch.length > 0;
     const ready = isParent
-      ? !!(n.partNumber?.trim() && n.description?.trim() && (marginOf(n) > 0 || n.manualSellPrice > 0)) && n._ch.every(c => nodeReady(c))
-      : !!(n.partNumber?.trim() && n.description?.trim() && n.supplier?.trim() && n.unitCost > 0 && (marginOf(n) > 0 || n.manualSellPrice > 0));
+      ? !!(n.partNumber?.trim() && n.description?.trim() && hasMarkupOf(n)) && n._ch.every(c => nodeReady(c))
+      : !!(n.partNumber?.trim() && n.description?.trim() && n.supplier?.trim() && n.unitCost > 0 && hasMarkupOf(n));
     quoteReadyMap.set(n.id, ready);
   });
 
@@ -336,7 +338,7 @@ const computePricing = ({ tree, items, frt, proj, brazilTaxes, brazilStates, isC
 
   return {
     topCOGS, totalInbFrt, freightTagStatus, siscomex, afrmm, outEntries, totalOutSP, totalOutCost, totalOutMargin,
-    marginOf, getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
+    marginOf, hasMarkupOf, getAlloc, allocMap, spMap, netPriceMap, spTaxMap, quoteReadyMap, getItemSP, getItemNetPrice, getItemSPWithSalesTax,
     calculateReverseMargin, landedCOGS, itemsSP, grand, itemsSPWithTax, totalOutSPWithTax, grandWithTax, freightTaxSC,
     outboundFreightAllocations, packingCratingAllocations, pcActive, pcTotal, pcBaseSPs, distributeOutboundFreight,
   };

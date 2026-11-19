@@ -327,3 +327,6 @@ const gcsInflationBand = (pct, item) => {
 
 // Category / sub-category name from its code (the costing column shows codes only; names go in tooltips).
 const gcsCategoryName = code => { if (!code) return ''; const x = (code.length === 2 ? GCS_SUBCATEGORIES : GCS_CATEGORIES).find(c => c.code === code); return x ? x.name : ''; };
+
+// Quote-readiness bar colour by % of lines complete: red < 33, amber 33-65, light green 66-99, green 100.
+const gcsReadinessColor = pct => (pct >= 100 ? '#16a34a' : pct >= 66 ? '#65a30d' : pct >= 33 ? '#f59e0b' : '#dc2626');

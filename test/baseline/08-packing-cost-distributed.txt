@@ -447,7 +447,7 @@ No approvals recorded yet. Click Approve & Lock to create the first entry.
 Sheet 1 ✏️
 + Add Tab SCM Search
 ▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 1,934.67 · Sales 2,391.05 USD · EBITDA -0.91% No segment
-🎉 All items ready to quote! — review 2 validation concerns before approving 100 %
+🎉 All lines on Sheet 1 ready to quote! — review 2 validation concerns before approving 100 %
 ＋ Add Item + Add Section 📋 Copy for SAP B1 📥 Import Line Items from SAP Quote (.xlsx) ⚡ Quickest Lead 💰 Lowest Cost
 📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
 [] 🔍
