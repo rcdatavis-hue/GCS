@@ -555,7 +555,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 2,090.00 USD | 2,090.00 USD | | | | 3,620.74 USD | | |
+| TOTALS — SHEET 1 | 2,090.00 USD | 2,090.00 USD | | | | 3,620.74 USD | | |
 | Outbound Freight 1 : Freight 31 — cost 400.00 USD at 20.00% margin | distributed | | |
 | Outbound Freight 2 : Freight 32 — cost 150.00 USD at 25.00% margin | distributed | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 3,620.74 USD | | |

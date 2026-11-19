@@ -580,7 +580,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 5,051.63 GBP | 5,309.24 GBP | | | | 7,241.49 GBP | | |
+| TOTALS — SHEET 1 | 5,051.63 GBP | 5,309.24 GBP | | | | 7,241.49 GBP | | |
 | Outbound Freight 1 : Freight 18 — cost 200.00 GBP at 15.00% margin | 235.29 | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 7,476.79 GBP | | |
 

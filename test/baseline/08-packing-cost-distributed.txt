@@ -528,7 +528,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 1,800.00 USD | 1,875.00 USD | | | | 2,331.37 USD | | |
+| TOTALS — SHEET 1 | 1,800.00 USD | 1,875.00 USD | | | | 2,331.37 USD | | |
 | Outbound Freight 1 : Freight 38 — cost 100.00 USD at 10.00% margin | 111.11 | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 2,442.48 USD | | |
 

@@ -40,9 +40,13 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
   folder (stubbed `showDirectoryPicker`) and a stubbed feed (14 checks). `SHOT=/tmp/x` saves screenshots.
 - `test/cost-source.js dist/index.html`: automatic cost from any BU, the cost source location and picker, lead time default, manual cost override (22 checks).
 - `test/feed-rates.js dist/index.html`: rates refresh on the first feed load only, manual refresh, locked projects untouched; Summary suppliers collapsed (7 checks).
+- `test/tab-totals.js dist/index.html`: TOTALS row per tab, line sales total across tabs (4 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.8 · 2026-11-19: fix: the TOTALS row under the costing table showed the whole project on every tab. It now
+  totals the tab on screen (labelled with the tab name; same line figures as the GCS summary, before provisions);
+  the LINE SALES TOTAL row below still covers all tabs. Test `test/tab-totals.js` (4 checks).
 - v0.7 · 2026-11-19:
   - Exchange rates refresh automatically only on the first feed load of the session (reconnect at start-up or first
     connect; unlocked projects). Later reconnects and re-reads leave them; use Setup "Refresh from Feed".

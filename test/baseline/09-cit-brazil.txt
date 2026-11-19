@@ -597,7 +597,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 14,732.00 BRL | 23,931.17 BRL | | | | | | 34,167.35 BRL | | 43,244.09 BRL | | |
+| TOTALS — SHEET 1 | 14,732.00 BRL | 23,931.17 BRL | | | | | | 34,167.35 BRL | | 43,244.09 BRL | | |
 | Outbound Freight 1 : Freight 46 — cost 1,500.00 BRL at 12.00% margin | distributed | | | | |
 | TOTAL SELL PRICE (LINES) | 34,167.35 BRL | | 34,167.35 BRL | | |
 | TOTAL SELL PRICE (WITH SALES TAXES) | 43,244.09 BRL | | |

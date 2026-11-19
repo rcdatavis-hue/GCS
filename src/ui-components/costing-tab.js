@@ -23,12 +23,21 @@ visibleSlots.forEach(slot=>{if(slot.type==='heading'){rows.push(/*#__PURE__*/Rea
 rows.push(/*#__PURE__*/React.createElement(ItemRow,{key:slot.id,n:slot.node,depth:slot.depth,virtualNoteOnly:true}));}else{// 'item' (depth 0) or 'child' (depth > 0) — render the node at its depth,
 // suppressing recursive child rendering (virtualChild=true)
 rows.push(/*#__PURE__*/React.createElement(ItemRow,{key:slot.id,n:slot.node,depth:slot.depth,virtualChild:true,parentNode:slot.parentNode,rootNode:slot.rootNode,subBomLast:slot.subBomLast||false,rowNum:slot.rowNum||''}));}});if(bottomSpacerH>0)rows.push(/*#__PURE__*/React.createElement("tr",{key:"__bottom_spacer",style:{height:bottomSpacerH}},/*#__PURE__*/React.createElement("td",{colSpan:20})));return rows;})())),/*#__PURE__*/React.createElement("tr",{"data-sentinel":"1","aria-hidden":"true",style:{visibility:'hidden',pointerEvents:'none',userSelect:'none'}},/*#__PURE__*/React.createElement("td",{style:{padding:0},colSpan:20},/*#__PURE__*/React.createElement("div",{className:"py-1 px-1",style:{display:'flex'}},/*#__PURE__*/React.createElement("input",{className:"pcw-input",readOnly:true,style:{width:80},defaultValue:""}))))),tree.length>0&&/*#__PURE__*/React.createElement("tfoot",null,(()=>{
+// GCS: this row totals the tab on screen (the row below it is all tabs). Same figures as the tab's line totals in
+// the GCS summary (before provisions); falls back to a direct sum if the summary is not available.
+var _gIdx=gcsSheetIndex(costingSheets);var _tabId=_gIdx.byId.has(activeSheetId)?activeSheetId:_gIdx.firstId;
+var _tabRoots=tree.filter(n=>_gIdx.idOf(n)===_tabId);
+var _ts=gcsSummary&&gcsSummary.tabs.find(x=>x.id===_tabId);
+var tabCOGS=_ts?_ts.lineCost:_tabRoots.reduce((s,n)=>s+n.totalCOGS,0);
+var tabLanded=_ts?_ts.lineLanded:_tabRoots.reduce((s,n)=>s+(getAlloc(n).landed||0),0);
+var tabSP=_ts?_ts.lineSales:_tabRoots.reduce((s,n)=>s+getItemSP(n)*(n.qty||1),0);
+var tabSPWithTax=isCIT?_tabRoots.reduce((s,n)=>s+getItemSPWithSalesTax(n)*(n.qty||1),0):tabSP;
 var totalCellFor={
- cogs:{value:fc(topCOGS)+" "+proj.sellCcy,color:undefined},
- landed:{value:fc(landedCOGS)+" "+proj.sellCcy,color:"#1d4ed8"},
- gpBasePriceLC:{value:fc(conv(landedCOGS,proj.sellCcy,{CIW:'USD',CIT:'BRL',CIA:'ARS',ECL:'GBP'}[proj.bu]||proj.sellCcy,proj.rates))+" "+({CIW:'USD',CIT:'BRL',CIA:'ARS',ECL:'GBP'}[proj.bu]||proj.sellCcy),color:"#c4b5fd"},
- sellPrice:{value:fc(itemsSP)+" "+proj.sellCcy,color:"#16a34a"},
- sellPriceWithTax:isCIT?{value:fc(itemsSPWithTax)+" "+proj.sellCcy,color:"#7c3aed"}:null,
+ cogs:{value:fc(tabCOGS)+" "+proj.sellCcy,color:undefined},
+ landed:{value:fc(tabLanded)+" "+proj.sellCcy,color:"#1d4ed8"},
+ gpBasePriceLC:{value:fc(conv(tabLanded,proj.sellCcy,{CIW:'USD',CIT:'BRL',CIA:'ARS',ECL:'GBP'}[proj.bu]||proj.sellCcy,proj.rates))+" "+({CIW:'USD',CIT:'BRL',CIA:'ARS',ECL:'GBP'}[proj.bu]||proj.sellCcy),color:"#c4b5fd"},
+ sellPrice:{value:fc(tabSP)+" "+proj.sellCcy,color:"#16a34a"},
+ sellPriceWithTax:isCIT?{value:fc(tabSPWithTax)+" "+proj.sellCcy,color:"#7c3aed"}:null,
 };
 var citOnlyCols=new Set(['imported','afrmm','unitSellPriceWithTax','sellPriceWithTax']);
 // '__select' = the always-present checkbox column; row numbers only when shown
@@ -41,7 +50,7 @@ var firstTotalIdx=visibleCols.findIndex(k=>totalCellFor[k]);
 var labelSpan=firstTotalIdx===-1?visibleCols.length:Math.max(1,firstTotalIdx);
 var afterLabelCols=visibleCols.slice(labelSpan);
 return/*#__PURE__*/React.createElement("tr",{style:{background:"#f8fafc",borderTop:"2px solid #e2e8f0"}},
- /*#__PURE__*/React.createElement("td",{colSpan:labelSpan,className:"px-3 py-2 text-xs font-bold",style:{color:"#475569"}},t('totals').toUpperCase()),
+ /*#__PURE__*/React.createElement("td",{colSpan:labelSpan,className:"px-3 py-2 text-xs font-bold",style:{color:"#475569"}},`${t('totals').toUpperCase()} \u2014 ${((costingSheets.find(x=>x.id===_tabId)||{}).name||'').toUpperCase()}`),
  ...afterLabelCols.map(k=>{
   var total=totalCellFor[k];
   return total?/*#__PURE__*/React.createElement("td",{key:k,className:"px-2 py-2 text-right pcw-mono text-xs font-bold",style:{color:total.color}},total.value):/*#__PURE__*/React.createElement("td",{key:k});

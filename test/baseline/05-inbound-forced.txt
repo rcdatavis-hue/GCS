@@ -608,7 +608,7 @@ Q [Quotation]
 ✎ ⚖ +Sub ▾ ✕
 |
 []
-| TOTALS | 2,050.00 USD | 2,880.00 USD | | | | 3,840.00 USD | | |
+| TOTALS — SHEET 1 | 2,050.00 USD | 2,880.00 USD | | | | 3,840.00 USD | | |
 | LINE SALES TOTAL — ALL TABS, BEFORE PROVISIONS, ROUNDING AND DISCOUNT | 3,840.00 USD | | |
 
 ===== TAB 🚢 Freight & Tariffs
