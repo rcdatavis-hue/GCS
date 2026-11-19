@@ -48,6 +48,8 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
 ## Changelog
+- v0.15 · 2026-11-19: removed the aftermarket SAP tools from the costing toolbar: "Copy for SAP B1", "Import Line
+  Items from SAP Quote (.xlsx)" and "Import SAP BOM" (their handlers remain in parts-worksheet.js, unreachable).
 - v0.14 · 2026-11-19: EQD (Equipment Quotations Database) for Liquids, replacing the Excel macros
   modUnifiedEQDLookup / modLiquidsEQDProduction.
   - Feed: new sheet type `eqd` (sheet named EQD / "Equipment Quotations…" / SPQuoteDB) with the SharePoint list's

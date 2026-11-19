@@ -443,14 +443,13 @@ Sheet 1 ✏️
 + Add Tab SCM Search EQD Search
 ▸ Tab settings Plant section Default CROWN (A) Discount project 0.00% Provisions 1.00% / 2.00% / 5.10% / 0.00% COGS 978.07 · Sales 1,524.22 USD · EBITDA 15.83% No segment
 Quote Readiness — Sheet 1: 3 of 4 lines complete 75 %
-＋ Add Item + Add Section 📋 Copy for SAP B1 📥 Import Line Items from SAP Quote (.xlsx) ⚡ Quickest Lead 💰 Lowest Cost
+＋ Add Item + Add Section ⚡ Quickest Lead 💰 Lowest Cost
 📋 Ctrl+V to paste from Excel — click a cell first to fill from that position, or paste anywhere to append new rows
 [] 🔍
 ⌨️ Tip: Use Tab , Enter , Esc to navigate cells
 ↩ Undo ↪ Redo 🔎 Find & Replace
 👁️ Columns
 📊 Excel Options ▼
-🧱 Import SAP BOM
 | [ ] | Part No. ⇅
 | Description ⇅
 | Drawing No.
