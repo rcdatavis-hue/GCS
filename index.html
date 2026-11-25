@@ -99,8 +99,8 @@ const APP_SHORT = 'GCS';
 const FILE_EXT = '.gcs';                    // saves as .gcs; still opens PCW .pcw files
 const FORKED_FROM = 'PCW v0.8 · 2026-11-17';
 
-const PCW_VERSION = 'v0.20';
-const PCW_BUILD = '2026-11-19';
+const PCW_VERSION = 'v0.21';
+const PCW_BUILD = '2026-11-25';
 
 const sanitizeHTML = (val) => {
 if (val === null || val === undefined) return '';
@@ -5477,14 +5477,14 @@ if ('serviceWorker' in navigator) {
 window.__pcwLaunchFile = null;
 window.__pcwLaunchCallback = null; // React registers this once mounted
 
-// Protocol handler — gcs://open?ref=Q-2025-001 opens the app with that context
+// Protocol handler — web+gcs://open?ref=Q-2025-001 (registered in manifest.json; plain gcs:// also accepted) opens the app with that context
 // The URL is passed via window.location when launched via protocol
 window.__pcwProtocolData = null;
 (function() {
  const url = new URL(window.location.href);
  // When launched via protocol handler, Chrome passes the gcs:// URL as a query param
  const pcwUrl = url.searchParams.get('pcw_url') || url.searchParams.get('url');
- if (pcwUrl && pcwUrl.startsWith('gcs://')) {
+ if (pcwUrl && /^(web\+)?gcs:\/\//i.test(pcwUrl)) {
   try {
    const pcwParsed = new URL(pcwUrl);
    const params = Object.fromEntries(pcwParsed.searchParams.entries());

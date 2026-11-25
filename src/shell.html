@@ -119,14 +119,14 @@ if ('serviceWorker' in navigator) {
 window.__pcwLaunchFile = null;
 window.__pcwLaunchCallback = null; // React registers this once mounted
 
-// Protocol handler — gcs://open?ref=Q-2025-001 opens the app with that context
+// Protocol handler — web+gcs://open?ref=Q-2025-001 (registered in manifest.json; plain gcs:// also accepted) opens the app with that context
 // The URL is passed via window.location when launched via protocol
 window.__pcwProtocolData = null;
 (function() {
  const url = new URL(window.location.href);
  // When launched via protocol handler, Chrome passes the gcs:// URL as a query param
  const pcwUrl = url.searchParams.get('pcw_url') || url.searchParams.get('url');
- if (pcwUrl && pcwUrl.startsWith('gcs://')) {
+ if (pcwUrl && /^(web\+)?gcs:\/\//i.test(pcwUrl)) {
   try {
    const pcwParsed = new URL(pcwUrl);
    const params = Object.fromEntries(pcwParsed.searchParams.entries());

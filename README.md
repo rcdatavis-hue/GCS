@@ -49,7 +49,17 @@ xlsx@0.18.5, jszip@3.10.1, @babel/parser):
 - `test/scorecard.js dist/index.html`: scorecard export cells, overflow grouping, totals vs GCS, LibreOffice recalculation (21 checks).
 - `harness.js` seeds the autosave under `STATE_KEY` (default `gcs-state-v1`).
 
+## Deploying (GitHub Pages)
+The repo root is the published site (Settings → Pages → Deploy from a branch → main, / (root)).
+After a change: `node build.js && cp dist/index.html index.html`, run the tests, bump `PCW_VERSION` / `PCW_BUILD`
+in `src/engine/security.js`, commit and push. The service worker fetches the page fresh on every load; check the
+header badge for the new version.
+
 ## Changelog
+- v0.21 · 2026-11-25: GitHub Pages setup. The repo root is the site: `index.html` (built), `manifest.json` (installable
+  app: opens .gcs / .pcw files, share target, `web+gcs://` links, New Cost Sheet shortcut), `sw.js` (network first
+  for app files so a new upload shows on the next load; offline fallback; share target), icons, `.nojekyll`. The
+  page now accepts `web+gcs://` as well as `gcs://` launch links.
 - v0.20 · 2026-11-19: scorecard export fixes. Line costs are landed cost (inbound freight and tariffs included), so
   the Costing Confidence total and the Dashboard cost of materials equal the GCS cost of goods. CashFlow C9 excludes
   the agent commission (the template adds C17 on top in the contract value, which double-counted it). The Fabricated
