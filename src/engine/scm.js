@@ -210,7 +210,7 @@ const scmMergedItems = l => {
 };
 const scmIssueText = i => {
   const iss = (i.scm && i.scm.issues) || [];
-  return iss.map(k => SCM_ISSUE_TEXT[k] || k).concat(((i.scm && i.scm.mergedItems) || []).map(m => `Possibly missing line: ${m.sap} ${m.description}`)).join('\n');
+  return iss.filter(k => !(k === 'qty' && iss.includes('qtyInDrawing'))).map(k => SCM_ISSUE_TEXT[k] || k).concat(((i.scm && i.scm.mergedItems) || []).map(m => `Possibly missing line: ${m.sap} ${m.description}`)).join('\n');
 };
 
 // Parent of each V2 line: the Parent Row ID when it points at an earlier line one level up, else the nearest

@@ -56,6 +56,8 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.24 · 2026-11-25: SCM Search has an "Import SCM file(s)…" button. It opens one or more SCM model files directly
+  (V1 or V2, no master index or synced folder needed) and adds them to the import basket. Test: `test/scm-file.js`.
 - v0.23 · 2026-11-25: V2 SCM BOM levels. Every part of a V2 model is its own priced line (own cost source and markup level),
   keeping the SAP quantity, which is already the total for the model. Lines with sub-items become assembly header rows:
   level badge, SAP item, quantity, line count, and the cost / sell / GM of everything beneath them. Header rows carry no

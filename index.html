@@ -99,7 +99,7 @@ const APP_SHORT = 'GCS';
 const FILE_EXT = '.gcs';                    // saves as .gcs; still opens PCW .pcw files
 const FORKED_FROM = 'PCW v0.8 · 2026-11-17';
 
-const PCW_VERSION = 'v0.23';
+const PCW_VERSION = 'v0.24';
 const PCW_BUILD = '2026-11-25';
 
 const sanitizeHTML = (val) => {
@@ -3172,7 +3172,7 @@ const scmMergedItems = l => {
 };
 const scmIssueText = i => {
   const iss = (i.scm && i.scm.issues) || [];
-  return iss.map(k => SCM_ISSUE_TEXT[k] || k).concat(((i.scm && i.scm.mergedItems) || []).map(m => `Possibly missing line: ${m.sap} ${m.description}`)).join('\n');
+  return iss.filter(k => !(k === 'qty' && iss.includes('qtyInDrawing'))).map(k => SCM_ISSUE_TEXT[k] || k).concat(((i.scm && i.scm.mergedItems) || []).map(m => `Possibly missing line: ${m.sap} ${m.description}`)).join('\n');
 };
 
 // Parent of each V2 line: the Parent Row ID when it points at an earlier line one level up, else the nearest
@@ -4299,6 +4299,7 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
   var [destSheet, setDestSheet] = useState(activeSheetId || (costingSheets[0] || {}).id);
   var [afterId, setAfterId] = useState(defaultAfterId || '');
   var [result, setResult] = useState(null);
+  var [fileModels, setFileModels] = useState([]);   // SCM files opened directly: { model, lines, version, fileName }
 
   var load = async (force) => {
     setBusy(true); setStatus('Reading the SCM master index…');
@@ -4324,20 +4325,34 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
     inp.onchange = async e => { var file = e.target.files[0]; if (!file) return; setBusy(true); try { setLib(await ScmLibrary.loadIndexFromFile(file)); setStatus(`Loaded ${file.name}. Imports use the lines in the index (no folder to open the model files from).`); } catch (er) { setStatus(String(er.message || er)); } setBusy(false); };
     inp.click(); };
 
+  // Open one or more SCM model files directly (no index or folder needed) and put them in the basket.
+  var openModelFiles = () => { var inp = document.createElement('input'); inp.type = 'file'; inp.multiple = true; inp.accept = '.xlsx,.xlsm,.xlsb'; inp.setAttribute('data-scm', 'model-file-input');
+    inp.onchange = async e => { var files = [...(e.target.files || [])]; if (!files.length) return; setBusy(true); var added = [], errs = [];
+      for (var file of files) {
+        try { var wb = XLSX.read(await file.arrayBuffer(), { dense: true }); var p = scmParseModelFile(wb, file.name);
+          var info = p.info || {}; var model = { ...info, 'Model ID': scmText(info['Model ID']) || file.name.replace(/\.[^.]+$/, ''), 'Model Description': scmText(info['Model Description']) || file.name.replace(/\.[^.]+$/, ''), 'File Name': file.name };
+          added.push({ key: 'file:' + file.name + ':' + Date.now() + ':' + added.length, model, lines: p.lines, version: p.version, fileName: file.name }); }
+        catch (er) { errs.push(`${file.name}: ${er.message || er}`); } }
+      setFileModels(fm => [...fm, ...added]);
+      setStatus(errs.length ? 'Could not read: ' + errs.join('; ') : `Added ${added.length} SCM file${added.length === 1 ? '' : 's'} to the basket (${added.map(a => 'V' + a.version + ', ' + a.lines.length + ' lines').join('; ')}).`);
+      setBusy(false); };
+    document.body.appendChild(inp); inp.style.display = 'none'; inp.click(); setTimeout(() => inp.remove(), 60000); };
+
   var options = useMemo(() => (lib ? scmFilterOptions(lib.catalogue) : {}), [lib]);
   var results = useMemo(() => (lib ? scmSearch(lib, f) : []), [lib, f]);
   var byId = useMemo(() => new Map((lib ? lib.catalogue : []).map(m => [m['Model ID'], m])), [lib]);
   var inBasket = id => basket.includes(id);
   var toggle = id => setBasket(b => (b.includes(id) ? b.filter(x => x !== id) : [...b, id]));
   var basketModels = basket.map(id => byId.get(id)).filter(Boolean);
-  var basketLines = basketModels.reduce((s, m) => s + ((lib && lib.linesByModel.get(m['Model ID'])) || []).length, 0);
-  var notApproved = basketModels.filter(m => scmText(m.Status) && scmText(m.Status).toUpperCase() !== 'APPROVED');
+  var basketLines = basketModels.reduce((s, m) => s + ((lib && lib.linesByModel.get(m['Model ID'])) || []).length, 0) + fileModels.reduce((s, m) => s + m.lines.length, 0);
+  var basketCount = basket.length + fileModels.length;
+  var notApproved = basketModels.concat(fileModels.map(x => x.model)).filter(m => scmText(m.Status) && scmText(m.Status).toUpperCase() !== 'APPROVED');
   var dq = lib ? lib.dataQuality.filter(d => basket.includes(d['Model ID'])) : [];
   var sheetRoots = (items || []).filter(i => (i.sheetId || (costingSheets[0] || {}).id) === destSheet && !i.parentId);
   var setFilter = (k, v) => setF(p => ({ ...p, [k]: v }));
 
   var doImport = async () => {
-    if (!basketModels.length || locked) return;
+    if (!basketCount || locked) return;
     setBusy(true); setResult(null);
     var models = [], notes = [];
     for (var m of basketModels) {
@@ -4352,10 +4367,11 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
         models.push({ model: m, lines: (lib.linesByModel.get(m['Model ID']) || []), version: 1, fileName: m['File Name'], fromIndex: true });
       }
     }
+    fileModels.forEach(x => models.push({ model: x.model, lines: x.lines, version: x.version, fileName: x.fileName, fromIndex: false }));
     setStatus('Placing lines and looking up costs…');
     try {
       var s = await onImport({ models, sheetId: destSheet, afterId: afterId || null });
-      setResult({ ...s, notes: notes.concat(s.notes || []) }); setBasket([]); setStatus('');
+      setResult({ ...s, notes: notes.concat(s.notes || []) }); setBasket([]); setFileModels([]); setStatus('');
     } catch (e) { setStatus('Import failed: ' + (e.message || e)); }
     setBusy(false);
   };
@@ -4378,6 +4394,7 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
           ScmLibrary.supported() ? scmBtn(folder ? 'Change folder' : 'Choose SCM folder', pick, { title: 'Pick the synced Commercial Costing Program folder (holds SCM_Master_Index and the SCM files)', id: 'pick' }) : null,
           folder ? scmBtn(lib ? 'Reload index' : 'Open library', () => load(true), { disabled: busy, id: 'reload' }) : null,
           folder ? scmBtn('Read SCM files directly', scan, { disabled: busy, title: 'Build the list from every SCM file in the folder instead of the master index (slower; use if the index is missing or out of date)', id: 'scan' }) : null,
+          scmBtn('Import SCM file(s)…', openModelFiles, { disabled: busy, title: 'Open one or more SCM model files (.xlsx) directly and add them to the basket — no index or folder needed', id: 'model-file', primary: !lib }),
           scmBtn('Load index file…', loadFile, { disabled: busy, title: 'Open SCM_Master_Index_v1.xlsm directly (imports then use the index lines)', id: 'file' }),
           scmBtn('Close', onClose, { id: 'close' }))),
       status ? scmH("div", { "data-scm": "status", style: { padding: '6px 14px', fontSize: 12, background: '#fffbeb', color: '#92400e', borderBottom: '1px solid #fde68a' } }, status) : null,
@@ -4415,8 +4432,12 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
             'Choose the synced ', scmH("b", null, 'Commercial Costing Program'), ' folder (OneDrive). It must contain SCM_Master_Index_v1.xlsm and the Sales Cost Models folder. Tip: set the folder to "Always keep on this device" so files open instantly.') : null),
         // right: basket + destination
         scmH("div", { "data-scm": "basket", style: { width: 360, borderLeft: '1px solid var(--pcw-border, #e2e8f0)', display: 'flex', flexDirection: 'column', padding: 12, gap: 10, overflow: 'auto' } },
-          scmH("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, scmH("b", null, 'Import basket'), scmH("span", { style: { fontSize: 12, color: '#475569' }, "data-scm": "basket-count" }, `${basket.length} model${basket.length === 1 ? '' : 's'} · ${basketLines} lines`),
-            basket.length ? scmBtn('Clear', () => setBasket([]), { style: { marginLeft: 'auto' }, id: 'basket-clear' }) : null),
+          scmH("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } }, scmH("b", null, 'Import basket'), scmH("span", { style: { fontSize: 12, color: '#475569' }, "data-scm": "basket-count" }, `${basketCount} model${basketCount === 1 ? '' : 's'} · ${basketLines} lines`),
+            basketCount ? scmBtn('Clear', () => { setBasket([]); setFileModels([]); }, { style: { marginLeft: 'auto' }, id: 'basket-clear' }) : null),
+          fileModels.length ? scmH("div", { style: { display: 'flex', flexDirection: 'column', gap: 4 }, "data-scm": "file-models" }, fileModels.map(x => scmH("div", { key: x.key, style: { display: 'flex', gap: 6, alignItems: 'flex-start', fontSize: 12, padding: '4px 6px', background: '#f5f3ff', borderRadius: 4 } },
+            scmH("div", { style: { flex: 1 } }, scmH("div", { style: { fontWeight: 600 } }, x.model['Model Description']),
+              scmH("div", { style: { fontSize: 10.5, color: '#64748b' } }, `File · V${x.version} · ${x.lines.length} lines${x.model.Rate ? ' · ' + scmText(x.model.Rate) : ''}${x.model['Business Unit'] ? ' · ' + scmText(x.model['Business Unit']) : ''}${x.model.Status ? ' · ' + scmText(x.model.Status) : ''}`)),
+            scmH("button", { onClick: () => setFileModels(fm => fm.filter(y => y.key !== x.key)), title: 'Remove from basket', style: { border: 'none', background: 'transparent', cursor: 'pointer', color: '#94a3b8' } }, '\u2715')))) : null,
           scmH("div", { style: { display: 'flex', flexDirection: 'column', gap: 4 } }, basketModels.map(m => scmH("div", { key: m['Model ID'], style: { display: 'flex', gap: 6, alignItems: 'flex-start', fontSize: 12, padding: '4px 6px', background: 'var(--pcw-surface-2, #f8fafc)', borderRadius: 4 } },
             scmH("div", { style: { flex: 1 } }, scmH("div", { style: { fontWeight: 600 } }, m['Model Description']), scmH("div", { style: { fontSize: 10.5, color: '#64748b' } }, `${m.Rate || ''} · ${m['Business Unit'] || ''} · ${m.Status || ''}`)),
             scmH("button", { onClick: () => toggle(m['Model ID']), title: 'Remove', style: { border: 'none', background: 'none', cursor: 'pointer', color: '#94a3b8' } }, '✕')))),
@@ -4429,7 +4450,7 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
               scmH("option", { value: '' }, 'At the end of the tab'),
               sheetRoots.map((i, k) => scmH("option", { key: i.id, value: i.id }, `After ${k + 1}. ${i.type === 'heading' ? '— ' + (i.description || 'Heading') : [i.partNumber, i.description].filter(Boolean).join(' · ').slice(0, 60) || '(blank line)'}`))),
             scmH("div", { style: { fontSize: 10.5, color: '#64748b' } }, 'Each model comes in under a heading line. SAP items go into Part No.; cost, supplier and cost date come from the latest PO/PQ in the feed. Quantities are copied as they are. V2 models keep their BOM levels: assemblies become header rows that total the lines under them, start collapsed below the top level, and rescale their lines when you change their quantity.'),
-            scmBtn(busy ? 'Working…' : `Import ${basket.length || ''} model${basket.length === 1 ? '' : 's'}`, doImport, { primary: true, disabled: busy || !basket.length || locked, id: 'import', title: locked ? 'The project is locked' : '' }),
+            scmBtn(busy ? 'Working…' : `Import ${basketCount || ''} model${basketCount === 1 ? '' : 's'}`, doImport, { primary: true, disabled: busy || !basketCount || locked, id: 'import', title: locked ? 'The project is locked' : '' }),
             result ? scmH("div", { "data-scm": "result", style: { fontSize: 12, background: '#f0fdf4', color: '#166534', padding: 8, borderRadius: 4 } },
               `Imported ${result.models} model${result.models === 1 ? '' : 's'}, ${result.lines} lines. `,
               result.feed ? `${result.costed} costed from PO/PQ history; ${result.noCost} without a cost.` : 'Feed file not connected, so no costs were filled in. Connect it and use the row autofill, or type costs.',
