@@ -23,7 +23,7 @@ const mk = lineDisc => { const st = JSON.parse(JSON.stringify(base)); st.gcsForm
   const sum = () => page.$eval('[data-gcs=summary]', e => e.innerText);
   const s1 = await sum();
   // 5200/0.52 = 10000 → price 10,000, discount 500, contract 9,500
-  const before = num((s1.match(/Contract value \(rounded\)\s*([\d,\.]+)/) || [])[1]), total1 = num((s1.match(/Total contract value\s*([\d,\.]+)/) || [])[1]);
+  const before = num((s1.match(/Rounded up, before discount\s*([\d,\.]+)/) || [])[1]), total1 = num((s1.match(/Total contract value\s*([\d,\.]+)/) || [])[1]);
   ok('Summary shows the project discount set in Setup (5% off the rounded contract value)', /Project discount/.test(s1) && before > 0 && Math.abs(total1 - before * 0.95) < 0.01, `${before} → ${total1}`);
   const sd = page.locator('[data-gcs=summary] input').first();
   await sd.focus(); await page.waitForTimeout(120); await page.keyboard.press('Control+A'); await page.keyboard.type('10'); await page.keyboard.press('Tab'); await page.waitForTimeout(300);

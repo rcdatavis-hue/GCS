@@ -56,6 +56,26 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.25 · 2026-11-25: Less clutter.
+  - Header: the tabs moved into the dark bar; the full-width "feed not connected" banner is now a small pill (click to
+    connect); Sell CCY / Landed / version / Approve & Lock / Upload / Reset / dark mode left the bar. A **Save** menu holds
+    save .gcs, save package, PDF, auto-save, open a .gcs file and compare revisions; the **⋯** menu holds preferences
+    (language, date format, density, gridlines, row status colours, dark mode), reset and the version.
+  - Costing: column views (**Costing / Pricing / Review / Custom…**); saved layouts move to the Costing view once. One
+    toolbar row; less-used actions (section heading, quickest lead, lowest cost, find & replace, CSV, template, Excel
+    export, tips) are in a ⋯ Tools menu. The tab strip shows readiness, confidence, cost, sales and EBITDA on one line.
+    Rows: a thin status bar (green ready, amber cost or markup missing) instead of full-row shading; zeros show as "–";
+    currency suffixes dropped (shown only when a line's currency differs from the tab's); default markup shown quietly;
+    history icons, currency picker and empty-field placeholders appear on hover.
+  - Setup: section list, an essentials checklist (project name, quote ref, customer, bid location, segment, feed), one
+    card per subject with rarely changed fields behind "+ …" / Change (location defaults shown as one line). Customer is
+    one search-as-you-type field with **Use "…" as typed** for customers not in the BP list. Feed, auto-save and
+    Salesforce / SharePoint are three rows. Preferences → ⋯ menu, Save & restore → Save menu, approval log → Summary.
+  - Summary: four headline figures, a **Needs attention** list (no-cost lines, lines not ready, Salesforce rules,
+    segment, freight, customer) with a button for each, a By-tab table with confidence, the full Excel-definition P&L
+    collapsed (click to open) beside the contract value and project discount, and collapsible price build-up,
+    currencies / margin, suppliers, project details and approval log. The old hero banner, quote-quality stars, legacy
+    confidence card and Salesforce banners are gone. Test: `test/declutter.js`.
 - v0.24 · 2026-11-25: SCM Search has an "Import SCM file(s)…" button. It opens one or more SCM model files directly
   (V1 or V2, no master index or synced folder needed) and adds them to the import basket. Test: `test/scm-file.js`.
 - v0.23 · 2026-11-25: V2 SCM BOM levels. Every part of a V2 model is its own priced line (own cost source and markup level),

@@ -60,7 +60,8 @@ st.items = [
     ok('after recalculation: Dashboard ES sale value ($k) = CashFlow equipment − IS', Math.abs(cv('Dashboard', 'C58') - (v('CashFlow', 'C9') - v('CashFlow', 'D76')) / 1000) < 0.01, cv('Dashboard', 'C58'));
     ok('after recalculation: Dashboard EBITDA computed (no errors)', typeof cv('Dashboard', 'L79') === 'number' && typeof cv('Dashboard', 'L80') === 'number', `${cv('Dashboard', 'L79')} / ${cv('Dashboard', 'L80')}`);
   } else ok('LibreOffice recalculation (skipped: soffice not found)', true);
-  const gcs = await page.evaluate(() => { const t = document.querySelector('[data-gcs=summary]').innerText; const g = re => { const m = t.match(re); return m ? parseFloat(m[1].replace(/,/g, '')) : null; }; return { cogs: g(/Cost of goods \(incl\. provisions\)\s*([\d,\.]+)/), contract: g(/Contract value \(rounded\)\s*([\d,\.]+)/) }; });
+  await page.click('[data-gcs=pl-toggle]'); await page.waitForTimeout(150);
+  const gcs = await page.evaluate(() => { const t = document.querySelector('[data-gcs=summary]').innerText; const g = re => { const m = t.match(re); return m ? parseFloat(m[1].replace(/,/g, '')) : null; }; return { cogs: g(/Cost of goods \(incl\. provisions\)\s*([\d,\.]+)/), contract: g(/Rounded up, before discount\s*([\d,\.]+)/) }; });
   ok('Costing Confidence total (lines + provisions) = GCS cost of goods', Math.abs(v('Costing Confidence', 'F7') + v('Costing Confidence', 'F8') + v('Costing Confidence', 'F19') + Array.from({ length: 15 }, (_, i) => v('Costing Confidence', 'F' + (24 + i)) || 0).reduce((a, b) => a + b, 0) + v('Costing Confidence', 'F41') + v('Costing Confidence', 'F42') - gcs.cogs) < 0.05, JSON.stringify(gcs));
   ok('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
   await b.close();

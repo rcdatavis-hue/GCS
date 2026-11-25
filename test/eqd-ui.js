@@ -20,7 +20,7 @@ const feed = fs.readFileSync(feedFile).toString('base64');
     const handle = { kind: 'file', name: 'PCW_Feed.xlsx', getFile: async () => new File([bin], 'PCW_Feed.xlsx', { lastModified: Date.now() }), queryPermission: async () => 'granted', requestPermission: async () => 'granted' };
     window.showOpenFilePicker = async () => [handle];
   }, feed);
-  await page.$eval('button:has-text("Connect Feed File")', e => e.click());
+  await page.$eval('[data-feed-pill]', e => e.click());
   await page.waitForFunction(() => /all sheets loaded/i.test(document.body.innerText), null, { timeout: 60000 }).catch(() => {});
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForSelector('[data-cell="E1-partNo"]');
   ok('Liquids project: EQD and scaling columns shown', !!(await page.$('[data-cell="E1-eqd"]')) && !!(await page.$('[data-cell="E1-scaling"]')));

@@ -28,7 +28,7 @@ var GcsConfidenceStrip = function GcsConfidenceStrip({ mix, width, height, legen
 };
 
 // ── Tab settings: shown above the costing table for the active tab ──
-var GcsTabSettings = memo(function GcsTabSettings({ sheet, setCostingSheets, locked, summ, sellCcy, proj }) {
+var GcsTabSettings = memo(function GcsTabSettings({ sheet, setCostingSheets, locked, summ, sellCcy, proj, readiness }) {
   var [open, setOpen] = useState(false);
   if (!sheet) return null;
   var st = gcsSheetSettings(sheet);
@@ -38,15 +38,17 @@ var GcsTabSettings = memo(function GcsTabSettings({ sheet, setCostingSheets, loc
   var band = summ && summ.band ? summ.band : '';
   var chip = (txt, color, bg) => gcsH("span", { style: { fontSize: 10.5, padding: '1px 7px', borderRadius: 10, background: bg || '#f1f5f9', color: color || '#334155', whiteSpace: 'nowrap' } }, txt);
   return gcsH("div", { className: "pcw-card", style: { padding: '8px 12px' }, "data-gcs": "tab-settings" },
-    gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap', overflow: 'hidden', whiteSpace: 'nowrap', cursor: 'pointer' }, onClick: () => setOpen(o => !o) },
-      gcsH("span", { style: { fontSize: 12, fontWeight: 700, color: 'var(--pcw-text-primary)' } }, (open ? "▾ " : "▸ ") + "Tab settings"),
-      chip(st.type === 'option' ? (st.include ? 'Option · included' : 'Option · not included') : 'Plant section', st.type === 'option' && !st.include ? '#92400e' : undefined, st.type === 'option' && !st.include ? '#fef3c7' : undefined),
-      chip('Default ' + st.defaultLevel), chip('Discount ' + discLabel),
-      chip('Provisions ' + [fp(st.provisions.startupRisk), fp(st.provisions.fcaPacking), fp(st.provisions.c5Duty), fp(st.provisions.h1Duty)].join(' / ')),
+    gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', cursor: 'pointer', rowGap: 6 }, onClick: () => setOpen(o => !o), "data-gcs": "tab-strip" },
+      gcsH("span", { style: { fontSize: 13, fontWeight: 700, color: 'var(--pcw-text-primary)' } }, (open ? "\u25BE " : "\u25B8 ") + (sheet.name || 'Tab')),
+      gcsH("span", { style: { fontSize: 11.5, color: '#64748b', whiteSpace: 'nowrap' }, title: 'Click to change the tab type, segment, default markup level, discount and provisions' },
+        [st.type === 'option' ? (st.include ? 'Option · included' : 'Option · not included') : 'Plant section', 'Default ' + st.defaultLevel, 'Discount ' + discLabel].join(' \u00B7 ')),
+      readiness && readiness.total > 0 ? gcsH("span", { "data-readiness": readiness.pct, title: `${readiness.ready} of ${readiness.total} lines have a cost and a markup`, style: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: '#475569', whiteSpace: 'nowrap' } },
+        'Ready ', gcsH("b", null, `${readiness.ready} / ${readiness.total}`),
+        gcsH("span", { style: { width: 90, height: 6, borderRadius: 3, background: 'var(--pcw-surface-2, #eef0f2)', overflow: 'hidden', display: 'inline-block' } }, gcsH("span", { style: { display: 'block', height: '100%', width: readiness.pct + '%', background: gcsReadinessColor(readiness.pct), transition: 'width .4s' } }))) : null,
+      summ && summ.lineCount > 0 ? gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, gcsH("span", { style: { fontSize: 11.5, color: '#64748b' } }, 'Confidence'), gcsH(GcsConfidenceStrip, { mix: summ.confidence, width: 70, ccy: sellCcy, id: 'tab' })) : null,
       summ && summ.lineCount > 0 ? gcsH(React.Fragment, null,
-        gcsH("span", { style: { marginLeft: 'auto', fontSize: 11, color: '#475569' } }, "COGS ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.cogs)), " · Sales ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.sales, sellCcy)), " · EBITDA ", gcsH("b", { className: "pcw-mono", style: { color: gcsBandColor(band) } }, fp(summ.ebitdaPct))),
-        summ.target !== null ? chip(`${gcsBandShort(band)} vs ${fp(summ.target)}`, '#fff', gcsBandColor(band)) : chip('No segment', '#92400e', '#fef3c7'),
-        gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6, marginLeft: 4 } }, gcsH("span", { style: { fontSize: 10.5, color: '#64748b' } }, 'Confidence'), gcsH(GcsConfidenceStrip, { mix: summ.confidence, width: 70, ccy: sellCcy, id: 'tab' }))) : null),
+        gcsH("span", { style: { marginLeft: 'auto', fontSize: 11.5, color: '#475569', whiteSpace: 'nowrap' } }, "Cost ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.cogs)), " \u00B7 Sales ", gcsH("b", { className: "pcw-mono" }, gcsMoney(summ.sales, sellCcy)), " \u00B7 EBITDA ", gcsH("b", { className: "pcw-mono", style: { color: gcsBandColor(band) } }, fp(summ.ebitdaPct))),
+        summ.target !== null ? chip(`${gcsBandShort(band)} vs ${fp(summ.target)}`, '#fff', gcsBandColor(band)) : chip('No segment', '#92400e', '#fef3c7')) : null),
     open && gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'minmax(200px,1fr) minmax(320px,1.6fr) minmax(260px,1.3fr)', gap: 16, marginTop: 10 } },
       // Column 1: type, segment, default level, discount
       gcsH("div", { style: { display: 'flex', flexDirection: 'column', gap: 8 } },
@@ -253,4 +255,95 @@ var GcsCollapsibleCard = function GcsCollapsibleCard({ title, summary, defaultOp
       h("span", { style: { fontWeight: 700, fontSize: 13, color: 'var(--pcw-text-primary)' } }, title),
       !open && summary ? h("span", { style: { fontSize: 11.5, color: '#64748b', marginLeft: 'auto' } }, summary) : null),
     open ? children : null);
+};
+
+// ═══ SUMMARY (v0.25): headline figures, needs-attention list, tab table, P&L (collapsed) and contract value ═══
+var gsKpi = (label, value, sub, o = {}) => gcsH("div", { className: "pcw-card", "data-kpi": o.id, style: { padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 6, minWidth: 0 } },
+  gcsH("span", { style: { fontSize: 12, color: '#64748b', fontWeight: 500 } }, label),
+  gcsH("span", { style: { fontSize: 24, fontWeight: 700, letterSpacing: '-.01em', color: o.color || 'var(--pcw-text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, className: o.mono ? 'pcw-mono' : undefined }, value),
+  sub ? gcsH("span", { style: { fontSize: 12, color: o.subColor || '#64748b' } }, sub) : null);
+
+var GcsSummaryTop = function GcsSummaryTop({ gcsSummary, proj, isCIT, grandWithTax, readiness, attention, autoConf }) {
+  if (!gcsSummary) return null;
+  var P = gcsSummary.project, ccy = proj.sellCcy;
+  var conf = P.confidence;
+  var r = readiness || { ready: 0, total: 0, pct: 0 };
+  return gcsH("div", { style: { display: 'flex', flexDirection: 'column', gap: 16 }, "data-summary": "top" },
+    gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 12 } },
+      gsKpi('Contract value', gcsH(React.Fragment, null, fc(P.contractValue), gcsH("span", { style: { fontSize: 14, color: '#64748b', marginLeft: 6, fontWeight: 500 } }, ccy)),
+        isCIT && grandWithTax > 0 ? `${fc(grandWithTax)} ${ccy} with sales taxes` : (P.contractBeforeDiscount !== P.contractValue ? `${fc(P.contractBeforeDiscount)} before discount` : (P.sales ? `${fc(P.sales)} before rounding up` : null)), { id: 'contract', mono: true }),
+      gsKpi('EBITDA', fp(P.ebitdaPct), P.target === null ? 'No target — segment not set' : `Target ${fp(P.target)} · ${P.band}`, { id: 'ebitda', color: gcsBandColor(P.band), subColor: P.target === null ? '#b45309' : gcsBandColor(P.band) }),
+      gsKpi('Cost confidence', conf && conf.total > 0 ? conf.label : (CONF_LABEL[autoConf] || '—'), gcsH(GcsConfidenceStrip, { mix: conf, width: 180, height: 7, ccy, id: 'kpi' }), { id: 'confidence' }),
+      gsKpi('Ready to quote', gcsH(React.Fragment, null, String(r.ready), gcsH("span", { style: { fontSize: 14, color: '#64748b', marginLeft: 6, fontWeight: 500 } }, `of ${r.total} lines`)),
+        gcsH("span", { style: { display: 'block', height: 6, borderRadius: 3, background: 'var(--pcw-surface-2, #eef0f2)', overflow: 'hidden' } }, gcsH("span", { style: { display: 'block', height: 6, width: (r.pct || 0) + '%', background: gcsReadinessColor(r.pct || 0) } })), { id: 'readiness' })),
+    attention && attention.length ? gcsH("div", { className: "pcw-card", "data-summary": "attention", style: { padding: '12px 18px 4px' } },
+      gcsH("div", { style: { display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 6 } }, gcsH("span", { style: { fontWeight: 700, fontSize: 14 } }, 'Needs attention'), gcsH("span", { style: { fontSize: 12, color: '#64748b' } }, attention.length)),
+      attention.map((a, i) => gcsH("div", { key: a.id, "data-attention": a.id, style: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderTop: '1px solid var(--pcw-border, #eef0f2)', fontSize: 13.5 } },
+        gcsH("span", { style: { width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: a.level === 'error' ? '#dc2626' : a.level === 'ok' ? '#16a34a' : '#f59e0b' } }),
+        gcsH("span", { style: { fontWeight: 500 } }, a.title), a.detail ? gcsH("span", { style: { color: '#64748b', fontSize: 12.5 } }, a.detail) : null,
+        a.action ? gcsH("button", { type: 'button', onClick: a.action, style: { marginLeft: 'auto', background: 'none', border: 'none', color: '#2563eb', fontSize: 13, cursor: 'pointer', whiteSpace: 'nowrap' } }, a.actionLabel) : null))) : null);
+};
+
+var GcsSummaryV2 = function GcsSummaryV2({ gcsSummary, proj, setLockedProj }) {
+  if (!gcsSummary) return null;
+  var { tabs, project: P } = gcsSummary;
+  var ccy = proj.sellCcy;
+  var [plOpen, setPlOpen] = useState(false);
+  var th = (t, right) => gcsH("th", { style: { padding: '7px 10px', textAlign: right ? 'right' : 'left', fontSize: 11, color: '#64748b', fontWeight: 600, borderBottom: '1px solid var(--pcw-border, #e2e8f0)', whiteSpace: 'nowrap' } }, t);
+  var td = (v, o = {}) => gcsH("td", { className: o.mono === false ? undefined : "pcw-mono", style: { padding: '8px 10px', textAlign: o.left ? 'left' : 'right', fontWeight: o.bold ? 700 : 400, color: o.color, whiteSpace: 'nowrap', fontSize: 12.5, borderBottom: '1px solid var(--pcw-border, #f1f2f4)' } }, v);
+  var shown = tabs.filter(t => t.lineCount > 0 || t.include);
+  var plRow = (label, val, pct, o = {}) => gcsH("tr", { style: { background: o.bg } },
+    gcsH("td", { style: { padding: '6px 10px', fontSize: 12.5, fontWeight: o.bold ? 700 : 400, paddingLeft: o.indent ? 24 : 10, color: o.indent ? '#475569' : undefined, borderTop: o.top ? '1px solid var(--pcw-border, #e2e8f0)' : undefined } }, label),
+    gcsH("td", { className: "pcw-mono", style: { padding: '6px 10px', textAlign: 'right', fontSize: 12.5, fontWeight: o.bold ? 700 : 400, color: o.color, borderTop: o.top ? '1px solid var(--pcw-border, #e2e8f0)' : undefined } }, gcsMoney(val, ccy)),
+    gcsH("td", { className: "pcw-mono", style: { padding: '6px 10px', textAlign: 'right', fontSize: 12, color: '#64748b', borderTop: o.top ? '1px solid var(--pcw-border, #e2e8f0)' : undefined } }, pct === null ? '' : fp(pct)));
+  var anyOwnDisc = tabs.some(t => t.include && t.lineCount > 0 && t.discountPct !== (Number(proj.gcsDiscount) || 0));
+  return gcsH("div", { "data-gcs": "summary", style: { display: 'flex', flexDirection: 'column', gap: 16 } },
+    gcsH("div", { className: "pcw-card", style: { padding: '14px 18px' } },
+      gcsH("div", { style: { fontWeight: 700, fontSize: 14, marginBottom: 8 } }, 'By tab'),
+      gcsH("div", { style: { overflowX: 'auto' } }, gcsH("table", { style: { width: '100%', borderCollapse: 'collapse', minWidth: 720 } },
+        gcsH("thead", null, gcsH("tr", null, th('Tab'), th('Cost', 1), th('Sales', 1), th('EBITDA', 1), th('Target'), th('Confidence'), th('Price', 1), th('Discount', 1))),
+        gcsH("tbody", { "data-gcs": "confidence" }, shown.map(t => gcsH("tr", { key: t.id, "data-summary-tab": t.id, style: { opacity: t.include ? 1 : 0.55 } },
+          td(gcsH(React.Fragment, null, t.name, t.type === 'option' ? gcsH("span", { style: { fontSize: 11, color: '#94a3b8', marginLeft: 6, fontWeight: 400 } }, t.include ? 'option' : 'option · excluded') : null), { left: true, mono: false, bold: true }),
+          td(gcsMoney(t.cogs)), td(gcsMoney(t.sales)), td(fp(t.ebitdaPct), { color: gcsBandColor(t.band), bold: true }),
+          td(t.target === null ? '—' : `${fp(t.target)} · ${gcsBandShort(t.band)}`, { left: true, mono: false, color: t.target === null ? '#94a3b8' : gcsBandColor(t.band) }),
+          gcsH("td", { style: { padding: '8px 10px', borderBottom: '1px solid var(--pcw-border, #f1f2f4)' } }, gcsH(GcsConfidenceStrip, { mix: t.confidence, width: 110, height: 7, ccy, id: t.id })),
+          td(gcsMoney(t.price), { bold: true }), td(t.discount ? '−' + gcsMoney(t.discount) + ' (' + fp(t.discountPct) + ')' : '—', { color: '#64748b' }))),
+          gcsH("tr", { "data-summary-tab": "__project", style: { background: 'var(--pcw-surface-2, #f8fafc)' } },
+            td('Project', { left: true, mono: false, bold: true }), td(gcsMoney(P.cogs), { bold: true }), td(gcsMoney(P.sales), { bold: true }), td(fp(P.ebitdaPct), { bold: true, color: gcsBandColor(P.band) }),
+            td(P.target === null ? '—' : `${fp(P.target)} · ${gcsBandShort(P.band)}`, { left: true, mono: false, color: P.target === null ? '#94a3b8' : gcsBandColor(P.band) }),
+            gcsH("td", { style: { padding: '8px 10px' } }, gcsH(GcsConfidenceStrip, { mix: P.confidence, width: 110, height: 7, ccy, id: '__project' })),
+            td(gcsMoney(P.contractBeforeDiscount), { bold: true }), td(P.discount ? '−' + gcsMoney(P.discount) : '—', { color: '#64748b' })))))),
+    gcsH("div", { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: 16, alignItems: 'start' } },
+      gcsH("div", { className: "pcw-card", "data-gcs": "pl", style: { padding: plOpen ? '14px 18px' : '12px 18px' } },
+        gcsH("button", { type: 'button', "data-gcs": "pl-toggle", "aria-expanded": plOpen, onClick: () => setPlOpen(o => !o), style: { display: 'flex', alignItems: 'center', gap: 8, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left' } },
+          gcsH("span", { style: { fontSize: 11, color: '#94a3b8', width: 10 } }, plOpen ? '▾' : '▸'),
+          gcsH("span", { style: { fontWeight: 700, fontSize: 14 } }, 'Project P&L'), gcsH("span", { style: { fontSize: 12, color: '#64748b' } }, 'Excel GCS definitions'),
+          !plOpen ? gcsH("span", { className: "pcw-mono", style: { marginLeft: 'auto', fontSize: 12, color: '#475569' } }, `Contribution ${fp(P.contributionPct)} · Gross ${fp(P.grossMarginPct)} · EBITDA `, gcsH("b", { style: { color: gcsBandColor(P.band) } }, fp(P.ebitdaPct))) : null),
+        plOpen ? gcsH("table", { style: { width: '100%', borderCollapse: 'collapse', marginTop: 10 } }, gcsH("tbody", null,
+          plRow('Sales (sections + included options)', P.sales, 100, { bold: true }),
+          plRow('Cost of goods (incl. provisions)', P.cogs, P.sales ? P.cogs / P.sales * 100 : 0, { indent: true }),
+          plRow('Contribution margin', P.contribution, P.contributionPct, { top: true }),
+          plRow('Manufacturing & Engineering', P.mAndE, P.sales ? P.mAndE / P.sales * 100 : 0, { indent: true }),
+          P.discount ? plRow('Discount', -P.discount, P.sales ? -P.discount / P.sales * 100 : 0, { indent: true }) : null,
+          plRow('Gross margin', P.grossMargin, P.grossMarginPct, { top: true }),
+          plRow('Sales & Administration', P.sAndA, P.sales ? P.sAndA / P.sales * 100 : 0, { indent: true }),
+          plRow('EBITDA', P.ebitda, P.ebitdaPct, { top: true, bold: true, color: gcsBandColor(P.band), bg: 'var(--pcw-surface-2, #f8fafc)' }),
+          gcsH("tr", null, gcsH("td", { colSpan: 3, style: { padding: '8px 10px', fontSize: 12 } },
+            P.target === null ? gcsH("span", { style: { color: '#b45309' } }, 'No segment set: choose one in Setup (or per tab) to see the EBITDA target.')
+              : gcsH("span", null, 'Target ', gcsH("b", null, fp(P.target)), ` (average of the tabs' segment targets, project ${P.projectValueUSD > GCS_VALUE_THRESHOLD_USD ? 'over' : 'under'} $1m) → `, gcsH("b", { style: { color: gcsBandColor(P.band) } }, P.band)))))) : null),
+      gcsH("div", { className: "pcw-card", "data-gcs": "contract", style: { padding: '14px 18px' } },
+        gcsH("div", { style: { fontWeight: 700, fontSize: 14, marginBottom: 8 } }, 'Contract value', proj.incoterm ? gcsH("span", { style: { fontSize: 12, color: '#64748b', fontWeight: 500, marginLeft: 6 } }, proj.incoterm) : null),
+        gcsH("table", { style: { width: '100%', borderCollapse: 'collapse' } }, gcsH("tbody", null,
+          tabs.filter(t => t.include && t.lineCount > 0).map(t => gcsH("tr", { key: t.id }, gcsH("td", { style: { padding: '4px 0', fontSize: 12.5 } }, t.name), gcsH("td", { className: "pcw-mono", style: { textAlign: 'right', fontSize: 12.5 } }, gcsMoney(t.price, ccy)))),
+          gcsH("tr", null, gcsH("td", { style: { padding: '6px 0', fontSize: 12.5, borderTop: '1px solid var(--pcw-border, #e2e8f0)' } }, 'Rounded up, before discount'), gcsH("td", { className: "pcw-mono", style: { textAlign: 'right', fontSize: 12.5, borderTop: '1px solid var(--pcw-border, #e2e8f0)' } }, gcsMoney(P.contractBeforeDiscount, ccy))),
+          gcsH("tr", null, gcsH("td", { style: { padding: '4px 0', fontSize: 12.5 } },
+            gcsH("span", { style: { display: 'inline-flex', alignItems: 'center', gap: 6 } }, 'Project discount',
+              gcsH(NumInput, { className: "pcw-input pcw-mono text-xs", style: { width: 64, textAlign: 'right', padding: '1px 4px' }, value: Number(proj.gcsDiscount) || 0, min: 0, max: 100, isPercent: true, disabled: !!proj.locked || !setLockedProj, "data-gcs-field": "summaryDiscount",
+                title: 'Project discount %, taken off each tab price after rounding (same field as in Setup). Tabs with their own % keep it.',
+                onChange: v => { if (setLockedProj && Number(v) !== (Number(proj.gcsDiscount) || 0)) setLockedProj(p => ({ ...p, gcsDiscount: Number(v) || 0 })); } }), '%',
+              anyOwnDisc ? gcsH("span", { style: { fontSize: 11, color: '#64748b' } }, '(some tabs set their own)') : null)),
+            gcsH("td", { className: "pcw-mono", style: { textAlign: 'right', fontSize: 12.5 } }, P.discount ? '−' + gcsMoney(P.discount, ccy) : '—')),
+          P.shippingPrice ? gcsH("tr", null, gcsH("td", { style: { padding: '4px 0', fontSize: 12.5 } }, 'Shipping & freight (outbound, not in EBITDA)'), gcsH("td", { className: "pcw-mono", style: { textAlign: 'right', fontSize: 12.5 } }, gcsMoney(P.shippingPrice, ccy))) : null,
+          gcsH("tr", null, gcsH("td", { style: { padding: '8px 0 2px', fontSize: 14, fontWeight: 700, borderTop: '2px solid var(--pcw-border, #e2e8f0)' } }, 'Total contract value'),
+            gcsH("td", { className: "pcw-mono", "data-gcs": "contract-total", style: { textAlign: 'right', fontSize: 14, fontWeight: 700, borderTop: '2px solid var(--pcw-border, #e2e8f0)' } }, gcsMoney(P.contractValue, ccy))))))));
 };

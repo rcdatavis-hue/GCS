@@ -162,7 +162,7 @@ var CSS=`
 .pcw-logo-title{font-weight:700;font-size:13px;}
 .pcw-logo-sub{font-size:10px;color:#64748b;}
 .pcw-header-total{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:14px;color:#fbbf24;}
-.pcw-nav{background:#fff;border-bottom:1px solid #e2e8f0;display:flex;padding:0 20px;overflow-x:auto;}
+.pcw-nav{background:#fff;border-bottom:1px solid #e2e8f0;display:flex;padding:0 20px;overflow-x:auto;}.pcw-header{flex-wrap:wrap;gap:8px 16px;padding:8px 20px;}.pcw-row .pcw-hover-ctl{opacity:0;transition:opacity .12s;}.pcw-row:hover .pcw-hover-ctl,.pcw-row:focus-within .pcw-hover-ctl,.pcw-hover-ctl:focus{opacity:1;}.pcw-zero{color:#b5bac2;}.pcw-row input::placeholder{color:transparent;}.pcw-row input:focus::placeholder,.pcw-row:hover input::placeholder{color:#b5bac2;}.pcw-quiet{color:#9aa1ab!important;}.pcw-ccy-diff{color:#1d4ed8!important;font-weight:600;}.pcw-nav.pcw-nav-in-header{background:transparent!important;border:0!important;padding:0;flex:1 1 auto;gap:2px;min-width:0;}.pcw-nav-in-header .pcw-tab{color:#cbd5e1;border:0;border-radius:6px;padding:6px 12px;font-size:13px;}.pcw-nav-in-header .pcw-tab:hover{color:#fff;background:#1e293b;}.pcw-nav-in-header .pcw-tab.active{color:#fff;background:#1e293b;border:0;font-weight:600;}.pcw-header-right{flex-wrap:wrap;justify-content:flex-end;}
 .pcw-tab{padding:10px 14px;font-size:12px;font-weight:500;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;color:#64748b;background:none;border-top:none;border-left:none;border-right:none;transition:color .15s,border-color .15s;}
 .pcw-tab:hover{color:#1e293b;}
 .pcw-tab.active{color:#2563eb;border-bottom-color:#2563eb;font-weight:600;}

@@ -8,6 +8,7 @@
  "freight-rows.js",
  "pricing-hooks.js",
  "dropdowns.js",
+ "header-menu.js",
  "gcs-panels.js",
  "summary-tab.js",
  "freight-tab.js",
@@ -18,6 +19,7 @@
  "brazil-sales-tax-tab.js",
  "eqd.js",
  "scm-search.js",
+ "costing-toolbar.js",
  "costing-tab.js",
  "parts-worksheet.js",
  "app-mount.js"

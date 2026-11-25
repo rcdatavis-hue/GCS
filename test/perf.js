@@ -6,7 +6,7 @@ const [,,html,stateFile,prof]=process.argv;
  const t0=Date.now();const {page,errors}=await openApp(b,html,st,{width:1600,height:1000});
  await page.click('.pcw-nav .pcw-tab >> nth=1');await page.waitForSelector('[data-cell$="-qty"]',{timeout:60000});
  const open=Date.now()-t0;const rows=await page.$$eval('tbody tr',r=>r.length);
- const readTotal=()=>page.evaluate(()=>{const t=document.getElementById('root').innerText.match(/Landed:[^\n]*\n([^\n]*)/);return t?t[1]:'';});
+ const readTotal=()=>page.evaluate(()=>{const e=document.querySelector('[data-gcs="tab-strip"]');const t=e&&e.innerText.match(/Cost\s+([\d,\.]+)/);return t?t[1]:'';});
  let cdp;if(prof){cdp=await page.context().newCDPSession(page);await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:200});await cdp.send('Profiler.start');}
  const times=[];
  for(const v of ['7','3','9']){
@@ -14,7 +14,7 @@ const [,,html,stateFile,prof]=process.argv;
   const before=await readTotal();
   await page.keyboard.press('Control+A');await page.keyboard.type(v);
   const s=Date.now();await page.keyboard.press('Tab');
-  await page.waitForFunction(b=>{const t=document.getElementById('root').innerText.match(/Landed:[^\n]*\n([^\n]*)/);return t&&t[1]!==b;},before,{timeout:30000,polling:16});
+  await page.waitForFunction(b=>{const e=document.querySelector('[data-gcs="tab-strip"]');const t=e&&e.innerText.match(/Cost\s+([\d,\.]+)/);return t&&t[1]!==b;},before,{timeout:30000,polling:16});
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   times.push(Date.now()-s);}
  if(prof){const {profile}=await cdp.send('Profiler.stop');fs.writeFileSync(prof,JSON.stringify(profile));}

@@ -15,14 +15,15 @@ async function connect(page, data = feed) {
     const handle = { kind: 'file', name: 'PCW_Feed.xlsx', getFile: async () => new File([bin], 'PCW_Feed.xlsx', { lastModified: Date.now() }), queryPermission: async () => 'granted', requestPermission: async () => 'granted' };
     window.showOpenFilePicker = async () => [handle];
   }, data);
-  await page.$eval('button:has-text("Connect Feed File")', e => e.click());
-  const loaded = await page.waitForFunction(() => /all sheets loaded/i.test(document.body.innerText), null, { timeout: 15000 }).then(() => true).catch(() => false);
+  await page.$eval('[data-feed-pill]', e => e.click());
+  const loaded = await page.waitForSelector('[data-feed-pill=on]', { timeout: 15000 }).then(() => true).catch(() => false);
   await page.waitForTimeout(800);
   return loaded;
 }
-const ratesShown = page => page.evaluate(() => {
+const ratesShown = async page => { if (!(await page.$('text=EUR per USD'))) await page.click('[data-setup=rates-edit]').catch(() => {}); await page.waitForTimeout(100); return ratesEval(page); };
+const ratesEval = page => page.evaluate(() => {
   const out = {}; document.querySelectorAll('input').forEach(i => { const lab = (i.closest('div') || {}).innerText || ''; const m = lab.trim().match(/^(EUR|GBP|BRL)\b/); if (m && i.value) out[m[1]] = i.value; });
-  return { out, refreshed: /Last refreshed:[^\n]*today/i.test(document.body.innerText), never: /Never refreshed/.test(document.body.innerText) };
+  return { out, refreshed: /Rates from the feed[^\n]*today/i.test(document.body.innerText), never: /Rates not refreshed/.test(document.body.innerText) };
 });
 
 (async () => {
@@ -42,7 +43,7 @@ const ratesShown = page => page.evaluate(() => {
   await page.click('.pcw-nav .pcw-tab >> nth=0'); await page.waitForTimeout(300);
   const again = await ratesShown(page);
   ok('reconnecting the feed later does not change the rates', /0\.8765/.test(again.out.EUR) && /0\.7654/.test(again.out.GBP), JSON.stringify(again.out));
-  await page.click('text=Refresh from Feed'); await page.waitForTimeout(600);
+  await page.click('[data-setup=rates-refresh]'); await page.waitForTimeout(600);
   const manual = await ratesShown(page);
   ok('"Refresh from Feed" still updates them', /^0\.5/.test(manual.out.EUR) && /^0\.4/.test(manual.out.GBP) && /^3\.3/.test(manual.out.BRL), JSON.stringify(manual.out));
   // Summary: Selected Suppliers collapsed by default, expands on click

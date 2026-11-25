@@ -63,7 +63,7 @@ const headerTotal = page => page.$eval('.pcw-header-total', e => e.innerText).th
   await page.check('[data-gcs=tab-settings] input[type=checkbox]'); await page.waitForTimeout(300);
   ok('including the option adds its rounded price (520/0.52=1000)', Math.abs(await headerTotal(page) - (price * 0.95 + 1000)) < 0.01, await headerTotal(page));
   await page.click('.pcw-nav .pcw-tab >> nth=4'); await page.waitForTimeout(400);
-  const sumText = await page.$eval('[data-gcs=summary]', e => e.innerText);
+  const sumText = await page.$eval('[data-summary=top]', e => e.innerText);
   ok('summary shows EBITDA target from segment (Crush <$1m = 30%)', /Target\s+30\.00%/.test(sumText), sumText.match(/Target[^\n]*/)?.[0]);
   ok('no console errors (part 1)', errors.length === 0, errors.slice(0, 2));
   await page.context().close();
@@ -85,7 +85,7 @@ const headerTotal = page => page.$eval('.pcw-header-total', e => e.innerText).th
   ok('after autosave + reload: old line still 33.50%, new line still follows the default, file marked converted', m2 && num(m2) === 33.5 && saved === 1 && lvl === '', `${m2} format=${saved} newLevel=${JSON.stringify(lvl)}`);
   // .pcw upload
   const tmp = path.join(os.tmpdir(), 'parts-quote.pcw'); fs.writeFileSync(tmp, JSON.stringify(old));
-  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('text=Upload')]);
+  await page.click('[data-hm=save]'); const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('[data-hm=save-open]')]);
   await chooser.setFiles(tmp); await page.waitForTimeout(1200);
   await page.click('.pcw-nav .pcw-tab >> nth=1'); await page.waitForTimeout(400);
   const m3 = await page.$eval(`[data-cell="${firstId}-margin"]`, e => e.value).catch(() => null);

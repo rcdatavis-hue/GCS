@@ -27,8 +27,8 @@ st.items = [L('Q', 'main', { unitCost: 1000, source: 'Quotation' }), L('P', 'mai
   ok('ICUG hidden from the Source list; a line already on ICUG keeps it', !oX.includes('Item Cost Use Guidance') && oX.includes('EQD') && oI.includes('Item Cost Use Guidance'), oX.join(',') + ' / ' + oI.join(','));
   ok('no Item Cost Use Guidance estimate buttons', !(await page.$('text=Apply Est.')) && !(await page.$('text=✦ Est')));
   ok('tab 2 is its own (EQD only: 60%, Medium)', t2.rate === 60 && t2.label === 'Medium', JSON.stringify(t2).slice(0, 80));
-  const hdr = await page.evaluate(() => [...document.querySelectorAll('span')].find(e => e.textContent === 'Cost Confidence:').parentElement.innerText);
-  ok('header Cost Confidence uses the same project score (Medium)', /Medium/.test(hdr), hdr);
+  const hdr = await page.evaluate(() => [...document.querySelectorAll('span')].find(e => e.textContent === 'Confidence').parentElement.innerText);
+  ok('header Confidence uses the same project score (Medium)', /Medium/.test(hdr), hdr);
   await page.click('.pcw-nav .pcw-tab >> text=Summary'); await page.waitForSelector('[data-gcs=confidence]');
   const proj = await rate('[data-gcs=confidence] [data-gcs-confidence="__project"]');
   const sumText = await page.$eval('[data-gcs=confidence]', e => e.innerText.replace(/\s+/g, ' '));
