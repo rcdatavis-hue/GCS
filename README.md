@@ -56,6 +56,10 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.22 · 2026-11-25: fix: Excel reported the exported scorecard as damaged ("Repaired Records: Cell information from
+  /xl/worksheets/sheet12.xml", the hidden Coding sheet). The template builder had removed the cached results of the
+  two dynamic-array formulas there (Coding E207, E243, which spill Menus lists), leaving their spill cells orphaned.
+  Array formulas now keep their cached values; the template was rebuilt.
 - v0.21 · 2026-11-25: GitHub Pages setup. The repo root is the site: `index.html` (built), `manifest.json` (installable
   app: opens .gcs / .pcw files, share target, `web+gcs://` links, New Cost Sheet shortcut), `sw.js` (network first
   for app files so a new upload shows on the next load; offline fallback; share target), icons, `.nojekyll`. The

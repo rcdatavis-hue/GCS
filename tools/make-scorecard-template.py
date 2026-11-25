@@ -48,8 +48,14 @@ for sheet in WIPE_CONSTANTS:
 for n in list(files):
     if n.startswith('xl/worksheets/sheet'):
         x = files[n].decode()
-        x = re.sub(r'(<c r="[A-Z]+\d+"[^>]*?)\s+t="(?:str|e|n|b)"([^>]*>\s*<f)', r'\1\2', x)
-        x = re.sub(r'(<f[^>]*/>|<f[^>]*>.*?</f>)<v>[^<]*</v>', r'\1', x, flags=re.S)
+        # cell by cell; dynamic-array formulas (t="array", spill ranges, cm= metadata) keep their cached results,
+        # because Excel reports the file as corrupt if a spilled formula has no value while its spill cells do
+        def strip(m):
+            c = m.group(0)
+            if '<f' not in c or '<f t="array"' in c: return c
+            c = re.sub(r'^(<c [^>]*?)\s+t="(?:str|e|n|b)"', r'\1', c)
+            return re.sub(r'<v>[^<]*</v>', '', c)
+        x = re.sub(r'<c r="[A-Z]+\d+"[^>]*?(?:/>|>.*?</c>)', strip, x, flags=re.S)
         files[n] = x.encode()
 # external hyperlinks (old project's Salesforce / SharePoint / approval links)
 for n in list(files):
