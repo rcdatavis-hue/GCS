@@ -141,31 +141,158 @@ const scmSearch = (lib, f) => {
 };
 
 // ── Turn a model's lines into GCS lines ──
-// V1: one flat block. V2: BOM Level relative to the model's minimum level becomes real parent/child lines
-// (Excel shows this as indented rows with tree guides). A heading line names the model above its block.
+// V1: one flat block. V2: priced lines plus assembly headers that show the BOM levels (see below).
+// A heading line names the model above its block.
 // Quantities are copied as they are (Excel does not scale them); scaling stays automatic (= 1 without a size).
 const scmBuildItems = ({ model, lines, version, sheetId, newId, fileName, fromIndex }) => {
   const id = scmText(model['Model ID']);
   const items = [{ id: newId(), type: 'heading', sheetId, parentId: null,
     text: `SCM: ${scmText(model['Model Description']) || id}${model['Rate'] ? ' · ' + scmText(model['Rate']) : ''}${model['Status'] ? ' · ' + scmText(model['Status']) : ''}`,
     scm: { modelId: id, revision: scmText(model['Revision']), status: scmText(model['Status']), file: fileName || scmText(model['File Name']), fromIndex: !!fromIndex } }];
-  const levels = lines.map(l => (scmText(l.bomLevel) === '' ? null : Number(l.bomLevel)));
-  const minLevel = version >= 2 ? Math.min(...levels.filter(v => v !== null && !isNaN(v))) : 0;
-  const stack = []; // [{depth, id}]
-  lines.forEach((l, i) => {
-    const depth = version >= 2 && levels[i] !== null && isFinite(minLevel) ? Math.max(0, levels[i] - minLevel) : 0;
-    while (stack.length && stack[stack.length - 1].depth >= depth) stack.pop();
-    const itemId = newId();
+  const lineItem = (l, extra) => {
+    const issues = scmLineIssues(l);
+    // A quantity pushed into the Model / Drawing column (bad paste in the SCM) is moved back and flagged.
+    if (issues.includes('qtyInDrawing')) l = { ...l, qty: Number(scmText(l.drawing)), drawing: '' };
     const qty = Number(l.qty);
-    items.push({ id: itemId, type: 'item', sheetId, parentId: depth > 0 && stack.length ? stack[stack.length - 1].id : null,
+    return { id: newId(), type: 'item', sheetId, parentId: null,
       partNumber: l.sap, description: l.description, drawingNumber: l.drawing, supplier: '', qty: isFinite(qty) && qty > 0 ? qty : 1,
       unitCost: 0, ccy: 'USD', source: '', margin: 0, contingency: 0, tariff: 0, discount: 0, leadTime: 0, imported: false, afrmm: false,
-      manualSellPrice: null, notes: l.notes || '', tag: l.tag || '', supplierRef: l.supplierRef || '',
-      scm: { modelId: id, line: l.lineNo, bomLevel: levels[i], parentRowId: l.parentRowId || '', qtyInvalid: !(isFinite(qty) && qty > 0) } });
-    stack.push({ depth, id: itemId });
+      manualSellPrice: null, notes: l.notes || '', tag: issues.includes('merged') ? scmText(l.tag).split(/[\t\r\n]/)[0] : (l.tag || ''), supplierRef: l.supplierRef || '',
+      scm: { modelId: id, line: l.lineNo, bomLevel: scmText(l.bomLevel) === '' ? null : Number(l.bomLevel), parentRowId: l.parentRowId || '', qtyInvalid: !(isFinite(qty) && qty > 0), issues,
+        ...(issues.includes('merged') ? { mergedItems: scmMergedItems(l) } : {}) }, ...extra };
+  };
+  if (version < 2) { lines.forEach(l => items.push(lineItem(l))); return items; }
+  // V2: every part is its own priced line (own cost source and markup level) carrying the SAP quantity as it is
+  // (already the total for the model). A line with sub-items becomes an assembly header: a heading row that shows
+  // the BOM level, rolls up the cost and sell of the lines under it and rescales them when its quantity changes.
+  const tree = bomResolveParents(lines);
+  const hasKids = new Set(tree.map(t => t.parent).filter(i => i !== null));
+  const idByIdx = new Map();
+  lines.forEach((l, i) => {
+    const t = tree[i];
+    const asm = t.parent !== null ? idByIdx.get(t.parent) || null : null;
+    if (hasKids.has(i)) {
+      const hid = newId(); idByIdx.set(i, hid);
+      const qty = Number(l.qty);
+      const b = { assembly: true, asm, level: t.level, depth: t.depth, sap: l.sap, description: l.description, drawing: l.drawing,
+        qty: isFinite(qty) && qty > 0 ? qty : 1, tag: scmText(l.tag).split(/[\t\r\n]/)[0], supplierRef: l.supplierRef || '', collapsed: t.depth > 0 };
+      items.push({ id: hid, type: 'heading', sheetId, parentId: null, text: bomHeaderText(b), bom: b,
+        scm: { modelId: id, line: l.lineNo, bomLevel: t.level, parentRowId: l.parentRowId || '', issues: scmLineIssues(l) } });
+    } else {
+      items.push(lineItem(l, { bom: { asm, level: t.level, depth: t.depth } }));
+    }
   });
   return items;
 };
+
+// Data-quality checks on one SCM line (shown on the line and in the import summary).
+const scmLineIssues = l => {
+  const out = [];
+  const q = Number(l.qty);
+  if (!(isFinite(q) && q > 0)) out.push('qty');
+  if (!(isFinite(q) && q > 0) && /^\d+(\.\d+)?$/.test(scmText(l.drawing))) out.push('qtyInDrawing');
+  if ([l.tag, l.supplierRef, l.notes, l.description, l.drawing].some(v => /[\t\r\n]/.test(scmText(v)))) out.push('merged');
+  return out;
+};
+const SCM_ISSUE_TEXT = { qty: 'Quantity missing or not a number (set to 1)', qtyInDrawing: 'The quantity was in the Model / Drawing column and has been moved to Qty \u2014 please check',
+  merged: 'A cell holds pasted text from other rows; a line may be missing from the SCM' };
+// SAP item numbers buried in a merged cell (other rows pasted into one cell), excluding the line's own item.
+const scmMergedItems = l => {
+  const own = scmText(l.sap);
+  const txt = [l.tag, l.supplierRef, l.notes, l.description, l.drawing].map(scmText).join('\n');
+  const out = [];
+  txt.split(/\r?\n|\r/).forEach(row => {
+    const cells = row.split('\t').map(c => c.trim());
+    const k = cells.findIndex(c => /^1\d{7}$/.test(c));
+    if (k >= 0 && cells[k] !== own) out.push({ sap: cells[k], description: cells.slice(k + 1).find(c => c && !/^[\d.]+$/.test(c)) || '' });
+  });
+  return out;
+};
+const scmIssueText = i => {
+  const iss = (i.scm && i.scm.issues) || [];
+  return iss.map(k => SCM_ISSUE_TEXT[k] || k).concat(((i.scm && i.scm.mergedItems) || []).map(m => `Possibly missing line: ${m.sap} ${m.description}`)).join('\n');
+};
+
+// Parent of each V2 line: the Parent Row ID when it points at an earlier line one level up, else the nearest
+// earlier line with a lower BOM level. depth = levels below the model's top level.
+const bomResolveParents = lines => {
+  const lv = lines.map(l => { const n = Number(l.bomLevel); return scmText(l.bomLevel) === '' || isNaN(n) ? null : n; });
+  const known = lv.filter(v => v !== null);
+  const min = known.length ? Math.min(...known) : 0;
+  const byLineNo = new Map(lines.map((l, i) => [scmText(l.lineNo), i]));
+  const out = []; const stack = [];
+  lines.forEach((l, i) => {
+    const level = lv[i] === null ? (stack.length ? out[stack[stack.length - 1]].level + 1 : min) : lv[i];
+    while (stack.length && out[stack[stack.length - 1]].level >= level) stack.pop();
+    let parent = stack.length ? stack[stack.length - 1] : null;
+    const pr = byLineNo.get(scmText(l.parentRowId));
+    if (pr !== undefined && pr < i && out[pr].level < level) parent = pr;
+    out.push({ level, parent, depth: parent === null ? 0 : out[parent].depth + 1 });
+    stack.push(i);
+  });
+  return out;
+};
+const bomHeaderText = b => `${b.sap ? b.sap + ' ' : ''}${b.description || 'Assembly'} × ${b.qty}`;
+
+// ── BOM display layer (V2 SCM imports) ──
+// Assembly headers are heading rows (never priced); lines point at their header through bom.asm.
+const bomIsAssembly = i => !!(i && i.type === 'heading' && i.bom && i.bom.assembly);
+const bomAncestors = (item, byId) => {
+  const out = []; let a = item && item.bom ? item.bom.asm : null; const seen = new Set();
+  while (a && !seen.has(a)) { seen.add(a); const h = byId.get(a); if (!bomIsAssembly(h)) break; out.push(h); a = h.bom.asm; }
+  return out;
+};
+// Ids of rows under a collapsed assembly.
+const bomHiddenIds = items => {
+  const byId = new Map(); let any = false;
+  items.forEach(i => { if (bomIsAssembly(i)) { byId.set(i.id, i); if (i.bom.collapsed) any = true; } });
+  const hidden = new Set();
+  if (!any) return hidden;
+  items.forEach(i => { if (i.bom && i.bom.asm && bomAncestors(i, byId).some(h => h.bom.collapsed)) hidden.add(i.id); });
+  return hidden;
+};
+// assembly id → { parts, priced, cost, sell, ready, issues } over every line beneath it.
+const bomRollup = (items, { treeById, netPriceMap, quoteReadyMap } = {}) => {
+  const byId = new Map(); const out = new Map();
+  items.forEach(i => { if (bomIsAssembly(i)) { byId.set(i.id, i); out.set(i.id, { parts: 0, priced: 0, cost: 0, sell: 0, ready: 0, issues: 0 }); } });
+  if (!out.size) return out;
+  items.forEach(i => {
+    if (!i.bom || !i.bom.asm) return;
+    const anc = bomAncestors(i, byId);
+    if (!anc.length) return;
+    const isLine = i.type !== 'heading';
+    const node = isLine && treeById ? treeById.get(i.id) : null;
+    const cost = node ? node.totalCOGS || 0 : 0;
+    const sell = isLine && netPriceMap ? netPriceMap.get(i.id) || 0 : 0;
+    const ready = isLine && quoteReadyMap ? !!quoteReadyMap.get(i.id) : false;
+    const iss = i.scm && i.scm.issues && i.scm.issues.length ? 1 : 0;
+    anc.forEach(h => { const r = out.get(h.id); if (isLine) { r.parts++; if (cost > 0) r.priced++; if (ready) r.ready++; r.cost += cost; r.sell += sell; } r.issues += iss; });
+  });
+  return out;
+};
+// New quantity on an assembly: every line and sub-assembly beneath it is scaled by the same factor.
+const bomSetQty = (items, asmId, newQty) => {
+  const byId = new Map(items.filter(bomIsAssembly).map(i => [i.id, i]));
+  const h = byId.get(asmId);
+  const q = Number(newQty);
+  if (!h || !(q > 0)) return items;
+  const f = q / (Number(h.bom.qty) || 1);
+  const round = v => Math.round(v * 1e6) / 1e6;
+  return items.map(i => {
+    if (i.id === asmId) { const b = { ...i.bom, qty: q }; return { ...i, bom: b, text: bomHeaderText(b) }; }
+    if (!i.bom || !i.bom.asm || f === 1) return i;
+    if (!bomAncestors(i, byId).some(a => a.id === asmId)) return i;
+    if (bomIsAssembly(i)) { const b = { ...i.bom, qty: round((Number(i.bom.qty) || 1) * f) }; return { ...i, bom: b, text: bomHeaderText(b) }; }
+    return { ...i, qty: round((Number(i.qty) || 1) * f) };
+  });
+};
+const bomSetCollapsed = (items, ids, collapsed) => {
+  const set = new Set(ids);
+  return items.map(i => (set.has(i.id) && bomIsAssembly(i) && !!i.bom.collapsed !== collapsed ? { ...i, bom: { ...i.bom, collapsed } } : i));
+};
+// Indent guide / level badge colours by depth under the model's top level.
+const BOM_DEPTH_COLORS = ['#7c3aed', '#0891b2', '#d97706', '#db2777', '#65a30d', '#2563eb', '#dc2626'];
+const bomDepthColor = d => BOM_DEPTH_COLORS[Math.max(0, d) % BOM_DEPTH_COLORS.length];
 
 // Insert new lines into the item list: after an anchor line (and all its BOM children), or at the end of a tab.
 const scmInsertItems = (items, newItems, { sheetId, afterId, firstSheetId }) => {

@@ -1,6 +1,7 @@
 [
  "num-input.js",
  "heading-row.js",
+ "bom-row.js",
  "item-row.js",
  "primitives.js",
  "autocomplete.js",

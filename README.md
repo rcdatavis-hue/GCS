@@ -56,6 +56,14 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.23 · 2026-11-25: V2 SCM BOM levels. Every part of a V2 model is its own priced line (own cost source and markup level),
+  keeping the SAP quantity, which is already the total for the model. Lines with sub-items become assembly header rows:
+  level badge, SAP item, quantity, line count, and the cost / sell / GM of everything beneath them. Header rows carry no
+  cost and get no feed autofill, so nothing is counted twice. Sub-assemblies import collapsed. Changing a header's quantity
+  rescales every line under it. Lines show their level badge and a coloured indent guide. Right-click a header to expand
+  or collapse everything, remove the header (its lines move up a level), or delete the assembly with its lines. SCM data
+  checks: a quantity in the Model / Drawing column is moved to Qty, and a cell with other rows pasted into it is flagged
+  with the SAP item that may be missing from the SCM. Test: `test/bom-v2.js`.
 - v0.22 · 2026-11-25: fix: Excel reported the exported scorecard as damaged ("Repaired Records: Cell information from
   /xl/worksheets/sheet12.xml", the hidden Coding sheet). The template builder had removed the cached results of the
   two dynamic-array formulas there (Coding E207, E243, which spill Menus lists), leaving their spill cells orphaned.

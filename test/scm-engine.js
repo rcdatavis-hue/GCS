@@ -25,11 +25,11 @@ ok('model file lines agree with the master index copy',idx&&idx.length===p.lines
 let n=0;const newId=()=>'n'+(++n);const model=lib.catalogue.find(m=>m['Model ID']===p.info['Model ID'])||{'Model ID':p.info['Model ID'],'Model Description':p.info['Model Description']};
 const items=S.scmBuildItems({model,lines:p.lines,version:p.version,sheetId:'main',newId,fileName:path.basename(modelFile)});
 ok('V1 import: heading + 57 flat lines, SAP item in Part No.',items.length===58&&items[0].type==='heading'&&items.slice(1).every(i=>!i.parentId)&&items[1].partNumber==='10401649'&&items[12].qty===110,`${items.length} ${items[1].partNumber} qty(line 11)=${items[12].qty}`);
-// V2: synthetic levels
-const v2=p.lines.slice(0,6).map((l,i)=>({...l,bomLevel:[1,2,3,3,2,1][i],tag:'T'+i,supplierRef:'SR'+i}));
+// V2: synthetic levels 1,2,3,3,2,1 → assembly headers for lines with sub-items, every part a top-level priced line
+const v2=p.lines.slice(0,6).map((l,i)=>({...l,lineNo:i+1,parentRowId:'',bomLevel:[1,2,3,3,2,1][i],tag:'T'+i,supplierRef:'SR'+i}));
 const it2=S.scmBuildItems({model,lines:v2,version:2,sheetId:'main',newId});
-const tree=S.buildTree(it2.filter(i=>i.type!=='heading'));
-ok('V2 import: BOM levels 1,2,3,3,2,1 become parent/child lines',tree.length===2&&tree[0]._ch.length===2&&tree[0]._ch[0]._ch.length===2&&it2[1].tag==='T0'&&it2[1].supplierRef==='SR0',JSON.stringify(tree.map(t=>[t.partNumber,t._ch.map(c=>[c.partNumber,c._ch.length])])));
+const hdr=it2.filter(i=>i.type==='heading'&&i.bom&&i.bom.assembly),prc=it2.filter(i=>i.type==='item');
+ok('V2 import: levels 1,2,3,3,2,1 → 2 assembly headers + 4 priced lines with depth',hdr.length===2&&prc.length===4&&prc.every(i=>!i.parentId)&&prc.map(i=>i.bom.depth).join()==='2,2,1,0'&&prc[0].tag==='T2'&&prc[0].supplierRef==='SR2',JSON.stringify(prc.map(i=>[i.partNumber,i.bom.depth])));
 // insertion
 const base=[{id:'a',sheetId:'main'},{id:'b',sheetId:'main'},{id:'b1',parentId:'b',sheetId:'main'},{id:'c',sheetId:'main'},{id:'x',sheetId:'s2'}];
 const ins=S.scmInsertItems(base,[{id:'N1'},{id:'N2'}],{sheetId:'main',afterId:'b',firstSheetId:'main'}).map(i=>i.id).join(',');

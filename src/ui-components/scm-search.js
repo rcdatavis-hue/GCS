@@ -74,7 +74,7 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
     setStatus('Placing lines and looking up costs…');
     try {
       var s = await onImport({ models, sheetId: destSheet, afterId: afterId || null });
-      setResult({ ...s, notes }); setBasket([]); setStatus('');
+      setResult({ ...s, notes: notes.concat(s.notes || []) }); setBasket([]); setStatus('');
     } catch (e) { setStatus('Import failed: ' + (e.message || e)); }
     setBusy(false);
   };
@@ -147,7 +147,7 @@ var ScmSearchPanel = function ScmSearchPanel({ onClose, costingSheets, activeShe
             scmH("select", { className: "pcw-input text-xs", value: afterId, onChange: e => setAfterId(e.target.value), "data-scm": "dest-pos" },
               scmH("option", { value: '' }, 'At the end of the tab'),
               sheetRoots.map((i, k) => scmH("option", { key: i.id, value: i.id }, `After ${k + 1}. ${i.type === 'heading' ? '— ' + (i.description || 'Heading') : [i.partNumber, i.description].filter(Boolean).join(' · ').slice(0, 60) || '(blank line)'}`))),
-            scmH("div", { style: { fontSize: 10.5, color: '#64748b' } }, 'Each model comes in under a heading line. SAP items go into Part No.; cost, supplier and cost date come from the latest PO/PQ in the feed for the project BU. Quantities are copied as they are.'),
+            scmH("div", { style: { fontSize: 10.5, color: '#64748b' } }, 'Each model comes in under a heading line. SAP items go into Part No.; cost, supplier and cost date come from the latest PO/PQ in the feed. Quantities are copied as they are. V2 models keep their BOM levels: assemblies become header rows that total the lines under them, start collapsed below the top level, and rescale their lines when you change their quantity.'),
             scmBtn(busy ? 'Working…' : `Import ${basket.length || ''} model${basket.length === 1 ? '' : 's'}`, doImport, { primary: true, disabled: busy || !basket.length || locked, id: 'import', title: locked ? 'The project is locked' : '' }),
             result ? scmH("div", { "data-scm": "result", style: { fontSize: 12, background: '#f0fdf4', color: '#166534', padding: 8, borderRadius: 4 } },
               `Imported ${result.models} model${result.models === 1 ? '' : 's'}, ${result.lines} lines. `,
