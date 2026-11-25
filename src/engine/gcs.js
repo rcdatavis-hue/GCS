@@ -454,7 +454,7 @@ const gcsEqdClearPatch = item => {
 // Columns that follow the project (EQD / scaling for Liquids, discount when lines have one, CIT tax columns,
 // row numbers) keep their current state when a view is applied.
 const GCS_VIEWS = {
-  costing: { label: 'Costing', tip: 'Day-to-day costing: cost, where it came from (source, cost source location, cost date, inflation), markup and sell', cols: ['partNo', 'description', 'supplier', 'qty', 'unitCost', 'costLoc', 'costBasis', 'costAdj', 'source', 'cogs', 'margins', 'sellPrice', 'actions'] },
+  costing: { label: 'Costing', tip: 'Day-to-day costing: cost, where it came from (source, cost location, cost date, inflation), markup and sell', cols: ['partNo', 'description', 'supplier', 'qty', 'unitCost', 'costLoc', 'costBasis', 'costAdj', 'source', 'cogs', 'margins', 'sellPrice', 'actions'] },
   pricing: { label: 'Pricing', tip: 'Cost to sell: landed cost, markup, unit and total sell, category', cols: ['partNo', 'description', 'qty', 'cogs', 'landed', 'category', 'margins', 'unitSellPrice', 'sellPrice', 'unitSellPriceWithTax', 'sellPriceWithTax', 'actions'] },
   review: { label: 'Review', tip: 'Checking sources: supplier, drawing, cost source and date, inflation, notes', cols: ['partNo', 'description', 'drawingNo', 'supplier', 'qty', 'unitCost', 'source', 'costLoc', 'costBasis', 'costAdj', 'cogs', 'margins', 'sellPrice', 'notes', 'actions'] },
 };

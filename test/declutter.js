@@ -32,7 +32,7 @@ st.items = [
   ok('fresh layout opens in the Costing view', (await page.$eval('[data-view-switch]', e => e.getAttribute('data-view-switch'))) === 'costing');
   const vis = async () => page.$$eval('thead th', x => x.map(e => e.innerText.trim()).filter(Boolean).join('|'));
   const v1 = await vis();
-  ok('Costing view: cost, cost source, cost date, inflation, markup and sell; no landed cost', /TOTAL COST/i.test(v1) && /MARKUP/i.test(v1) && /TOTAL SELL/i.test(v1) && /INFLATION/i.test(v1) && /COST DATE/i.test(v1) && (v1.match(/COST SOURCE/gi) || []).length === 2 && !/LANDED/i.test(v1), v1);
+  ok('Costing view: cost, cost location, source, cost date, inflation, markup and sell; no landed cost', /TOTAL COST/i.test(v1) && /MARKUP/i.test(v1) && /TOTAL SELL/i.test(v1) && /INFLATION/i.test(v1) && /COST DATE/i.test(v1) && /COST LOCATION/i.test(v1) && /COST SOURCE/i.test(v1) && !/LANDED/i.test(v1), v1);
   const mig = await page.evaluate(() => { const old = { partNo: true, description: true, supplier: true, qty: true, unitCost: true, source: true, cogs: true, margins: true, sellPrice: true, actions: true, landed: false, costAdj: false, costBasis: false, costLoc: false, _gcsViewV1: true }; const n = gcsViewMigrate(old); const cust = gcsViewMigrate({ ...old, landed: true }); return [n.costLoc && n.costAdj && n.costBasis, !cust.costAdj && cust.landed]; });
   ok('a layout on the old Costing view picks up the new columns once; a custom layout is left alone', mig[0] && mig[1], JSON.stringify(mig));
   await page.click('[data-view=review]'); await page.waitForTimeout(200);

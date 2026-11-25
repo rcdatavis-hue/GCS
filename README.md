@@ -56,6 +56,8 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.27 · 2026-11-25: the business-unit column (cost source location) is now headed "Cost Location"; "Cost Source" is
+  only the Quotation / Pricelist / … column.
 - v0.26 · 2026-11-25: the Costing view also shows cost source location, inflation % and cost date. Layouts still on the
   v0.25 Costing view pick them up once; custom layouts are left alone.
 - v0.25 · 2026-11-25: Less clutter.
