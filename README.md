@@ -56,6 +56,8 @@ in `src/engine/security.js`, commit and push. The service worker fetches the pag
 header badge for the new version.
 
 ## Changelog
+- v0.26 · 2026-11-25: the Costing view also shows cost source location, inflation % and cost date. Layouts still on the
+  v0.25 Costing view pick them up once; custom layouts are left alone.
 - v0.25 · 2026-11-25: Less clutter.
   - Header: the tabs moved into the dark bar; the full-width "feed not connected" banner is now a small pill (click to
     connect); Sell CCY / Landed / version / Approve & Lock / Upload / Reset / dark mode left the bar. A **Save** menu holds

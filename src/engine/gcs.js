@@ -454,7 +454,7 @@ const gcsEqdClearPatch = item => {
 // Columns that follow the project (EQD / scaling for Liquids, discount when lines have one, CIT tax columns,
 // row numbers) keep their current state when a view is applied.
 const GCS_VIEWS = {
-  costing: { label: 'Costing', tip: 'Day-to-day costing: what it is, cost, source, markup and sell', cols: ['partNo', 'description', 'supplier', 'qty', 'unitCost', 'source', 'cogs', 'margins', 'sellPrice', 'actions'] },
+  costing: { label: 'Costing', tip: 'Day-to-day costing: cost, where it came from (source, cost source location, cost date, inflation), markup and sell', cols: ['partNo', 'description', 'supplier', 'qty', 'unitCost', 'costLoc', 'costBasis', 'costAdj', 'source', 'cogs', 'margins', 'sellPrice', 'actions'] },
   pricing: { label: 'Pricing', tip: 'Cost to sell: landed cost, markup, unit and total sell, category', cols: ['partNo', 'description', 'qty', 'cogs', 'landed', 'category', 'margins', 'unitSellPrice', 'sellPrice', 'unitSellPriceWithTax', 'sellPriceWithTax', 'actions'] },
   review: { label: 'Review', tip: 'Checking sources: supplier, drawing, cost source and date, inflation, notes', cols: ['partNo', 'description', 'drawingNo', 'supplier', 'qty', 'unitCost', 'source', 'costLoc', 'costBasis', 'costAdj', 'cogs', 'margins', 'sellPrice', 'notes', 'actions'] },
 };
@@ -472,4 +472,12 @@ const gcsActiveView = vis => Object.keys(GCS_VIEWS).find(id => {
   return Object.keys(a).every(k => k.startsWith('_') || !!a[k] === !!vis[k]);
 }) || 'custom';
 // Saved layouts from before v0.25 move to the Costing view once; later choices are kept.
-const gcsViewMigrate = v => (v && v._gcsViewV1 ? v : { ...gcsApplyView(v || {}, 'costing'), _gcsViewV1: true });
+// v0.26: the Costing view gained cost source location, cost date and inflation; a layout still on the v0.25 Costing
+// view picks them up once.
+const GCS_COSTING_V025 = ['partNo', 'description', 'supplier', 'qty', 'unitCost', 'source', 'cogs', 'margins', 'sellPrice', 'actions'];
+const gcsViewMigrate = v => {
+  if (!v || !v._gcsViewV1) return { ...gcsApplyView(v || {}, 'costing'), _gcsViewV1: true, _gcsViewV2: true };
+  if (v._gcsViewV2) return v;
+  const wasCosting = Object.keys(v).every(k => k.startsWith('_') || GCS_VIEW_KEEP.has(k) || !!v[k] === GCS_COSTING_V025.includes(k));
+  return { ...(wasCosting ? gcsApplyView(v, 'costing') : v), _gcsViewV2: true };
+};

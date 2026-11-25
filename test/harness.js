@@ -11,8 +11,8 @@ const STATE_KEY=process.env.STATE_KEY||'gcs-state-v1';
 async function openApp(browser,htmlPath,stateJson,{width=1600,height=1000,extraStorage=null,freshLayout=false}={}){
   // Tests written before v0.25 expect the full column set: seed it unless the test asks for a fresh layout.
   if(!freshLayout){extraStorage={...(extraStorage||{})};var _ck=Object.keys(extraStorage).find(k=>/-col-visibility$/.test(k));
-    if(_ck){try{var _v=JSON.parse(extraStorage[_ck]);_v._gcsViewV1=true;extraStorage[_ck]=JSON.stringify(_v);}catch(e){}}
-    else extraStorage['gcs-col-visibility']=JSON.stringify({rowNum:false,partNo:true,description:true,drawingNo:true,supplier:true,qty:true,unitCost:true,costLoc:true,cogs:true,landed:true,tariff:false,imported:true,afrmm:true,leadTime:false,margins:true,costAdj:true,costBasis:false,scaleAdj:false,eqd:false,category:true,unitSellPrice:true,sellPrice:true,unitSellPriceWithTax:true,sellPriceWithTax:true,discount:false,source:true,notes:false,actions:true,gpBasePriceLC:false,_gcsViewV1:true,_gcsLeadTimeDefault:true,_gcsCostDateDefault:true,_gcsLineDiscountDefault:true});}
+    if(_ck){try{var _v=JSON.parse(extraStorage[_ck]);_v._gcsViewV1=true;_v._gcsViewV2=true;extraStorage[_ck]=JSON.stringify(_v);}catch(e){}}
+    else extraStorage['gcs-col-visibility']=JSON.stringify({rowNum:false,partNo:true,description:true,drawingNo:true,supplier:true,qty:true,unitCost:true,costLoc:true,cogs:true,landed:true,tariff:false,imported:true,afrmm:true,leadTime:false,margins:true,costAdj:true,costBasis:false,scaleAdj:false,eqd:false,category:true,unitSellPrice:true,sellPrice:true,unitSellPriceWithTax:true,sellPriceWithTax:true,discount:false,source:true,notes:false,actions:true,gpBasePriceLC:false,_gcsViewV1:true,_gcsViewV2:true,_gcsLeadTimeDefault:true,_gcsCostDateDefault:true,_gcsLineDiscountDefault:true});}
   const ctx=await browser.newContext({viewport:{width,height},timezoneId:'Europe/London',locale:'en-GB'});
   // Test copy: drop SRI hashes (local package bytes may differ from cdnjs) — the app file itself is unchanged.
   const html=fs.readFileSync(htmlPath,'utf8').replace(/ integrity="[^"]*"/g,'');
